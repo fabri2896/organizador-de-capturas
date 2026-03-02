@@ -46,9 +46,12 @@ echo ================================================
 echo.
 
 REM Compila o executavel COM assinatura de desenvolvedor
+REM Usando --onedir (menos deteccao de antivirus do que --onefile)
 pyinstaller ^
-  --onefile ^
-  --windowed ^
+  --onedir ^
+  --noconsole ^
+  --noupx ^
+  --clean ^
   --name "OrganizadorCapturas" ^
   --version-file "version_info.txt" ^
   --hidden-import "pystray._win32" ^
@@ -68,14 +71,17 @@ echo ================================================
 echo   COMPILACAO CONCLUIDA COM SUCESSO!
 echo ================================================
 echo.
-echo O arquivo EXE foi gerado em:
-echo   %cd%\dist\OrganizadorCapturas.exe
+echo O executavel foi gerado em:
+echo   %cd%\dist\OrganizadorCapturas\OrganizadorCapturas.exe
 echo.
-echo Tamanho aproximado: 15-30 MB
+echo IMPORTANTE:
+echo   - Foi gerada uma PASTA (nao um unico arquivo EXE)
+echo   - A pasta contem o EXE + DLLs necessarias
+echo   - Isto REDUZ MUITO a deteccao de antivirus!
 echo.
 echo PROXIMOS PASSOS:
-echo   1. Teste o EXE: dist\OrganizadorCapturas.exe
-echo   2. Copie para onde quiser usar
+echo   1. Teste: dist\OrganizadorCapturas\OrganizadorCapturas.exe
+echo   2. Para distribuir: Compacte a pasta "dist\OrganizadorCapturas" inteira em ZIP
 echo   3. Execute e configure a pasta a monitorar
 echo.
 echo DICA: Use o menu do icone (botao direito) para:
