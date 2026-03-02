@@ -1,0 +1,95 @@
+================================================================================
+  🔨 COMO COMPILAR PARA EXE NO WINDOWS
+================================================================================
+
+📋 PRÉ-REQUISITOS
+================================================================================
+
+1. Python 3.6 ou superior instalado
+   Download: https://www.python.org/downloads/
+
+2. Certifique-se que "pip" está instalado
+   Teste executando: python -m pip --version
+
+
+🚀 PASSO A PASSO (SUPER FÁCIL!)
+================================================================================
+
+OPÇÃO 1 - AUTOMÁTICA (RECOMENDADA):
+-----------------------------------
+
+  1. Duplo clique em: compilar_para_exe.bat
+  
+  2. Aguarde a compilação (1-2 minutos)
+  
+  3. O EXE estará em: dist\OrganizadorCapturas.exe
+  
+  4. Pronto! ✅
+
+
+OPÇÃO 2 - MANUAL:
+-----------------------------------
+
+  1. Abra o Prompt de Comando (CMD)
+  
+  2. Navegue até a pasta do projeto:
+     cd "C:\caminho\para\a\pasta"
+  
+  3. Instale o PyInstaller:
+     pip install pyinstaller
+  
+  4. Execute a compilação:
+     pyinstaller --onefile --windowed --name "OrganizadorCapturas" organizador_tray.py
+  
+  5. O EXE estará em: dist\OrganizadorCapturas.exe
+
+
+📦 APÓS A COMPILAÇÃO
+================================================================================
+
+O arquivo gerado:
+  📂 dist\OrganizadorCapturas.exe  (15-30 MB)
+
+Este arquivo É PORTÁTIL:
+  ✅ Pode copiar para qualquer lugar
+  ✅ Pode distribuir para outras pessoas
+  ✅ Não precisa de Python instalado para funcionar
+
+
+💡 DICAS
+================================================================================
+
+• O arquivo EXE é GRANDE (15-30 MB) porque inclui:
+  - Python inteiro
+  - Todas as bibliotecas necessárias
+  - Tudo em um único arquivo
+
+• Para distribuir:
+  - Só precisa do arquivo .exe
+  - Não precisa dos outros arquivos .py ou .txt
+  
+• Auto-start funciona normalmente!
+  - O EXE cria entrada no Registry do Windows
+  - Use o menu do ícone: "🚀 Iniciar com Windows"
+
+
+⚠️ PROBLEMAS COMUNS
+================================================================================
+
+PROBLEMA: "PyInstaller não encontrado"
+SOLUÇÃO: pip install pyinstaller
+
+PROBLEMA: "Python não é reconhecido"
+SOLUÇÃO: Reinstale Python marcando "Add to PATH"
+
+PROBLEMA: Antivírus bloqueia o EXE gerado
+SOLUÇÃO: Normal! É falso positivo. Adicione exceção no antivírus.
+
+
+📞 PRECISA DE AJUDA?
+================================================================================
+
+Abra uma issue no GitHub:
+https://github.com/fabri2896/pront-pyton/issues
+
+================================================================================

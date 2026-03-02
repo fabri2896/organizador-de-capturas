@@ -1,0 +1,11 @@
+# Organizador Automático de Capturas de Tela
+# Dependências Python
+
+# Monitoramento de sistema de arquivos
+watchdog>=2.1.0
+
+# Ícone na bandeja do sistema (system tray)
+pystray>=0.19.0
+
+# Processamento de imagens
+Pillow>=9.0.0

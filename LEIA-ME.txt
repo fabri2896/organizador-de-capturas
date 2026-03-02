@@ -1,0 +1,84 @@
+╔══════════════════════════════════════════════════════════════╗
+║     ORGANIZADOR AUTOMÁTICO DE CAPTURAS DE TELA              ║
+╚══════════════════════════════════════════════════════════════╝
+
+📋 O QUE FAZ:
+   • Monitora automaticamente a pasta onde está instalado
+   • Organiza capturas de tela em pastas por Ano/Mês/Dia
+   • Fica minimizado na área de notificação
+   • Mostra ícone verde quando ativo
+   • Mostra ícone amarelo quando pausado
+
+📁 ORGANIZAÇÃO:
+   Suas capturas serão organizadas assim:
+   
+   2026/
+   ├── 01-Janeiro/
+   │   ├── 15/
+   │   │   └── capturas do dia 15 de janeiro
+   ├── 02-Fevereiro/
+   │   ├── 24/
+   │   │   └── capturas do dia 24 de fevereiro
+   │   └── 25/
+   │       └── capturas do dia 25 de fevereiro
+
+🚀 COMO USAR:
+
+   OPÇÃO 1: Iniciar Automaticamente (Recomendado)
+   ───────────────────────────────────────────────
+   1. Duplo clique em: iniciar_organizador.sh
+      OU execute: ./iniciar_organizador.sh
+   
+   2. O aplicativo inicia EM SEGUNDO PLANO (sem janela!)
+   
+   3. Procure o ícone na área de notificação
+   
+   4. Clique com botão direito no ícone:
+      • Status - Ver quantos arquivos foram organizados
+      • Pausar - Pausa temporariamente
+      • Retomar - Volta a organizar
+      • Sair - Fecha o aplicativo
+
+   OPÇÃO 2: Controle Manual
+   ─────────────────────────
+   ./controle.sh start    # Inicia em background
+   ./controle.sh stop     # Para o aplicativo
+   ./controle.sh restart  # Reinicia
+   ./controle.sh status   # Verifica se está rodando
+   ./controle.sh log      # Vê o log em tempo real
+
+   OPÇÃO 3: Organizar Manualmente (Uma vez)
+   ─────────────────────────────────────────
+   python3 organizar_capturas.py
+
+⚙️ FUNCIONAMENTO:
+   • Roda COMPLETAMENTE EM SEGUNDO PLANO (não abre terminal!)
+   • Ícone na área de notificação mostra que está ativo
+   • Detecta automaticamente novos arquivos
+   • Organiza imagens: .png, .jpg, .jpeg, .gif, .bmp, .webp
+   • Usa a data do nome do arquivo (formato: YYYY-MM-DD)
+   • Se não encontrar data no nome, usa a data de modificação
+   • Evita duplicatas automaticamente
+   • Grava log em: organizador.log
+
+💡 DICAS:
+   • Salve suas capturas nesta pasta
+   • Elas serão organizadas automaticamente
+   • Terminal NÃO fica aberto - roda em background!
+   • Você pode pausar/retomar pelo menu do ícone
+   • O aplicativo conta quantos arquivos organizou
+   • Veja o que está acontecendo: ./controle.sh log
+
+🔧 REQUISITOS:
+   • Python 3.6 ou superior
+   • Bibliotecas: watchdog, pystray, pillow
+   • Sistema operacional com interface gráfica
+
+❓ PROBLEMAS?
+   • Se o ícone não aparecer, verifique se seu sistema tem suporte gráfico
+   • Use a OPÇÃO 3 para organizar manualmente
+   • Certifique-se de que as bibliotecas estão instaladas
+
+═══════════════════════════════════════════════════════════════
+Criado para organizar suas capturas automaticamente! 📸
+═══════════════════════════════════════════════════════════════

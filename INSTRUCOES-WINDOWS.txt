@@ -1,0 +1,110 @@
+╔══════════════════════════════════════════════════════════════╗
+║   ORGANIZADOR DE CAPTURAS - INSTRUÇÕES PARA WINDOWS         ║
+╚══════════════════════════════════════════════════════════════╝
+
+🪟 COMO USAR NO WINDOWS:
+
+═══════════════════════════════════════════════════════════════
+📌 OPÇÃO 1: INICIAR AUTOMATICAMENTE COM O WINDOWS (Recomendado)
+═══════════════════════════════════════════════════════════════
+
+   1. Duplo clique em: criar_atalho_inicializacao.vbs
+   
+   2. Clique em "Sim" se aparecer aviso de segurança
+   
+   3. Pronto! Agora o organizador inicia automaticamente
+      quando você ligar o computador
+   
+   ⚠️  IMPORTANTE: O Python deve estar instalado!
+
+═══════════════════════════════════════════════════════════════
+📌 OPÇÃO 2: INICIAR MANUALMENTE
+═══════════════════════════════════════════════════════════════
+
+   Duplo clique em: iniciar_organizador.bat
+   
+   → O aplicativo inicia em segundo plano
+   → Procure o ícone na área de notificação
+   → Você pode fechar a janela do prompt
+
+═══════════════════════════════════════════════════════════════
+📌 REMOVER DA INICIALIZAÇÃO AUTOMÁTICA
+═══════════════════════════════════════════════════════════════
+
+   1. Pressione: Windows + R
+   2. Digite: shell:startup
+   3. Aperte Enter
+   4. Delete o atalho "Organizador de Capturas"
+
+═══════════════════════════════════════════════════════════════
+🔧 REQUISITOS DO WINDOWS
+═══════════════════════════════════════════════════════════════
+
+   ✅ Python 3.6 ou superior instalado
+      → Baixe em: https://www.python.org/downloads/
+      → ⚠️ IMPORTANTE: Marque "Add Python to PATH" na instalação!
+   
+   ✅ Bibliotecas Python (instaladas automaticamente):
+      • watchdog
+      • pystray
+      • pillow
+
+═══════════════════════════════════════════════════════════════
+❓ SOLUÇÃO DE PROBLEMAS
+═══════════════════════════════════════════════════════════════
+
+   🔴 "Python não encontrado"
+      → Instale Python: https://www.python.org/downloads/
+      → Certifique-se de marcar "Add Python to PATH"!
+   
+   🔴 "Módulo não encontrado"
+      → Abra o Prompt de Comando (CMD)
+      → Execute: pip install watchdog pystray pillow
+   
+   🔴 Ícone não aparece na bandeja
+      → Verifique se Python está instalado corretamente
+      → Clique na seta ^ na bandeja para ver ícones ocultos
+      → Reinicie o computador após instalar dependências
+
+═══════════════════════════════════════════════════════════════
+💡 DICAS PARA WINDOWS
+═══════════════════════════════════════════════════════════════
+
+   • Salve suas capturas de tela nesta pasta
+   • Use Win + Shift + S para capturar tela no Windows 10/11
+   • Configure capturas para salvar automaticamente nesta pasta
+   • O aplicativo organiza instantaneamente ao detectar novos arquivos
+
+═══════════════════════════════════════════════════════════════
+🎯 LOCALIZAÇÃO DA PASTA INICIALIZAR
+═══════════════════════════════════════════════════════════════
+
+   C:\Users\[SEU_USUARIO]\AppData\Roaming\Microsoft\Windows\
+   Start Menu\Programs\Startup
+
+   Atalho rápido: Windows + R → shell:startup
+
+═══════════════════════════════════════════════════════════════
+📁 ESTRUTURA DE ORGANIZAÇÃO
+═══════════════════════════════════════════════════════════════
+
+   Suas capturas ficam organizadas assim:
+   
+   2026\
+   ├── 01-Janeiro\
+   │   ├── 15\
+   │   │   └── capturas_do_dia_15.png
+   │   └── 20\
+   ├── 02-Fevereiro\
+   │   ├── 24\
+   │   └── 25\
+   └── ...
+
+═══════════════════════════════════════════════════════════════
+🆘 SUPORTE
+═══════════════════════════════════════════════════════════════
+
+   • Veja o arquivo: LEIA-ME.txt
+   • Verifique os logs: organizador.log (após executar)
+   
+═══════════════════════════════════════════════════════════════
