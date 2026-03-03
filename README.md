@@ -5,6 +5,8 @@
 ![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-brightgreen.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Release](https://img.shields.io/github/v/release/fabri2896/organizador-capturas?label=Release)
+![Downloads](https://img.shields.io/github/downloads/fabri2896/organizador-capturas/total?label=Downloads)
 
 **Organize suas capturas de tela automaticamente por data, detecte duplicatas e mantenha tudo limpo!**
 
@@ -115,13 +117,27 @@ pip install watchdog pystray pillow
 
 ## 💾 Instalação
 
-### Opção 1: Download Direto
+### Opção 1: Executável Windows (Recomendado) 🎯
+
+**Sem necessidade de instalar Python!**
 
 1. **Baixe o release mais recente:**
+   - Acesse: [Releases](https://github.com/fabri2896/organizador-capturas/releases/latest)
+   - Baixe: `OrganizadorCapturas-v1.0.1-Windows.zip`
+
+2. **Extraia e execute:**
+   - Extraia o ZIP em qualquer pasta
+   - Execute `Organizador_Tray.exe`
+   - Pronto! ✅
+
+### Opção 2: Código Fonte (Python)
+
+**Para desenvolvedores ou usuários Linux:**
+
+1. **Clone o repositório:**
    ```bash
-   # Clone o repositório
-   git clone https://github.com/fabri2896/pront-pyton.git
-   cd pront-pyton
+   git clone https://github.com/fabri2896/organizador-capturas.git
+   cd organizador-capturas
    ```
 
 2. **Instale as dependências:**
@@ -129,13 +145,13 @@ pip install watchdog pystray pillow
    pip install -r requirements.txt
    ```
 
-### Opção 2: Download do ZIP
-
-1. Baixe `OrganizadorCapturas.zip` da página de releases
-2. Extraia em qualquer pasta (ex: `C:\Programas\OrganizadorCapturas\`)
-3. Instale dependências:
+3. **Execute:**
    ```bash
-   pip install watchdog pystray pillow
+   # Windows
+   python organizador_tray.py
+   
+   # Linux
+   python3 organizador_tray.py
    ```
 
 ---
@@ -423,8 +439,8 @@ Atualmente não há opção, mas é fácil modificar o código (comentar a seç�
 
 Tem dúvidas? Sugestões? Bugs?
 
-- 🐛 **Issues**: [GitHub Issues](https://github.com/fabri2896/pront-pyton/issues)
-- 💬 **Discussões**: [GitHub Discussions](https://github.com/fabri2896/pront-pyton/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/fabri2896/organizador-capturas/issues)
+- 💬 **Discussões**: [GitHub Discussions](https://github.com/fabri2896/organizador-capturas/discussions)
 
 ---
 
@@ -435,7 +451,7 @@ Tem dúvidas? Sugestões? Bugs?
 Made with ❤️ and Python 🐍
 
 </div>
-nd Python 🐍
+n 🐍
 
 </div>
 v>

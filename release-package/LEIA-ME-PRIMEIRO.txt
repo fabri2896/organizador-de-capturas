@@ -1,0 +1,177 @@
+================================================================================
+  📸 ORGANIZADOR DE CAPTURAS v1.0.1
+  LEIA-ME PRIMEIRO!
+================================================================================
+
+🎉 Obrigado por baixar o Organizador de Capturas!
+
+Este arquivo contém TUDO que você precisa saber para começar.
+
+
+🚀 INÍCIO RÁPIDO (30 SEGUNDOS)
+================================================================================
+
+1. Abra a pasta "OrganizadorCapturas"
+
+2. Duplo clique em: OrganizadorCapturas.exe
+
+3. Selecione a pasta de capturas que deseja monitorar
+
+4. Pronto! O ícone 📁 aparecerá na bandeja do sistema
+
+5. Tire suas capturas normalmente - elas serão organizadas automaticamente!
+
+
+📁 O QUE TEM NESTA PASTA
+================================================================================
+
+OrganizadorCapturas/
+├── OrganizadorCapturas.exe     ← ARQUIVO PRINCIPAL (duplo clique aqui!)
+├── python*.dll                 ← Bibliotecas necessárias (não delete!)
+├── _internal/                  ← Arquivos internos (não delete!)
+└── ... (outros arquivos DLL)
+
+INSTRUCOES-DE-USO.txt           ← Instruções completas e detalhadas
+LEIA-ME-PRIMEIRO.txt            ← Este arquivo
+
+
+⚠️ IMPORTANTE - NÃO DELETE NADA!
+================================================================================
+
+Para o programa funcionar, TODOS os arquivos são necessários:
+
+  ❌ NÃO delete as DLLs
+  ❌ NÃO delete a pasta _internal/
+  ❌ NÃO mova apenas o EXE para outro lugar
+
+Se quiser mover:
+  ✅ Mova a PASTA INTEIRA "OrganizadorCapturas"
+
+
+🎨 ÍCONE NA BANDEJA
+================================================================================
+
+O ícone 📁 muda de cor:
+
+  🟢 VERDE   = Ativo e monitorando
+  🟡 AMARELO = Pausado temporariamente  
+  🔴 VERMELHO = Erro
+
+Clique com BOTÃO DIREITO no ícone para ver o menu!
+
+
+🚀 AUTO-START (INICIAR COM WINDOWS)
+================================================================================
+
+Para o programa iniciar automaticamente ao ligar o PC:
+
+1. Execute OrganizadorCapturas.exe COMO ADMINISTRADOR
+   (botão direito → Executar como Administrador)
+
+2. Clique com botão direito no ícone 📁
+
+3. Clique em "🚀 Iniciar com Windows"
+
+4. Pronto! Na próxima vez que ligar o PC, já estará rodando!
+
+
+⚠️ ANTIVÍRUS BLOQUEOU O PROGRAMA?
+================================================================================
+
+ISSO É NORMAL! É um falso positivo.
+
+O programa é 100% seguro e de código aberto.
+
+SOLUÇÃO:
+
+1. Adicione o arquivo OrganizadorCapturas.exe nas EXCEÇÕES do antivírus
+
+2. Windows Defender:
+   • Configurações → Privacidade e Segurança
+   • Segurança do Windows → Proteção contra vírus
+   • Gerenciar configurações → Exclusões
+   • Adicionar exclusão → Arquivo → Selecione o EXE
+
+3. Outros antivírus:
+   • Procure por "Exclusões" ou "Exceções"
+   • Adicione o arquivo OrganizadorCapturas.exe
+
+POR QUE É SEGURO?
+  ✅ Código aberto no GitHub
+  ✅ Não se conecta à internet
+  ✅ Não pede senhas
+  ✅ Apenas organiza seus arquivos localmente
+
+
+📊 COMO FUNCIONA
+================================================================================
+
+1. Você tira uma captura de tela
+2. Salva na pasta configurada
+3. O programa detecta o novo arquivo
+4. Extrai a data do nome (ex: 2026-02-25)
+5. Cria pastas: 2026/02-Fevereiro/25/
+6. Move a captura para lá
+7. Verifica se não é duplicata
+8. Pronto! Captura organizada!
+
+
+💡 DICAS DE USO
+================================================================================
+
+✅ Use com Greenshot ou qualquer ferramenta de captura
+   • Configure para salvar na pasta monitorada
+   • Use padrão de nome com data: YYYY-MM-DD
+
+✅ O programa detecta automaticamente:
+   • Arquivos .png, .jpg, .jpeg, .gif, .bmp, .webp
+   • Capturas novas ou movidas para a pasta
+
+✅ Para pausar temporariamente:
+   • Botão direito → ⏸️ Pausar
+   • Útil se estiver fazendo limpeza manual
+
+✅ Ver estatísticas:
+   • Botão direito → 📊 Ver Logs e Status
+   • Mostra quantos arquivos foram organizados
+
+
+🔧 DESINSTALAR
+================================================================================
+
+Para remover o programa:
+
+1. Clique com botão direito no ícone 📁
+2. Selecione "🚪 Sair"
+3. Delete a pasta "OrganizadorCapturas"
+4. Se configurou auto-start:
+   • Win+R → shell:startup
+   • Delete o atalho "Organizador de Capturas"
+
+
+📞 PRECISA DE AJUDA?
+================================================================================
+
+🌐 Documentação completa: Ver arquivo INSTRUCOES-DE-USO.txt
+
+🐛 Reportar problema: 
+   https://github.com/fabri2896/organizador-capturas/issues
+
+💬 Dúvidas e discussões:
+   https://github.com/fabri2896/organizador-capturas/discussions
+
+
+🎉 APROVEITE!
+================================================================================
+
+Suas capturas de tela nunca mais ficarão bagunçadas!
+
+Organize, encontre facilmente e economize tempo! ⏰
+
+Desenvolvido com ❤️ por fabri2896
+Licença MIT - Gratuito e de código aberto
+
+
+================================================================================
+  VERSÃO: 1.0.1  |  DATA: 02/03/2026  |  LICENÇA: MIT
+================================================================================

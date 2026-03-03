@@ -57,3 +57,17 @@ desktop.ini
 # Arquivos de teste
 test_*.py
 tests/
+
+# PyInstaller
+*.spec
+build/
+dist/
+dist-nuitka/
+
+# Inno Setup
+Output/
+*.exe
+
+# Arquivos compilados (não versionar binários)
+*.zip
+*.tar.gz
