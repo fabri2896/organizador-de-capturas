@@ -54,9 +54,11 @@ desktop.ini
 *.bak
 *.cache
 
-# Arquivos de teste
+# Arquivos de teste individuais na raiz (nao versionar)
 test_*.py
-tests/
+
+# Pasta de testes unitarios (versionar)
+!tests/
 
 # PyInstaller
 *.spec

@@ -9,3 +9,6 @@ pystray>=0.19.0
 
 # Processamento de imagens
 Pillow>=9.0.0
+
+# Atalho de inicialização Windows (fallback, opcional)
+pywin32>=300

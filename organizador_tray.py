@@ -15,6 +15,7 @@ import threading
 import logging
 import json
 import hashlib
+from logging.handlers import RotatingFileHandler
 import tkinter as tk
 from tkinter import filedialog, messagebox, scrolledtext, ttk
 from pathlib import Path
@@ -172,7 +173,7 @@ class LogWindow:
         self.max_lines = 500
     
     def create_window(self):
-        """Cria a janela de logs"""
+        """Cria a janela de logs (usa Toplevel para não criar múltiplas instâncias Tk)"""
         if self.window is not None:
             try:
                 self.window.lift()
@@ -181,7 +182,12 @@ class LogWindow:
             except:
                 pass
         
-        self.window = tk.Tk()
+        # Cria uma janela principal oculta se não existir (necessária para Toplevel)
+        if not hasattr(self, '_root') or self._root is None:
+            self._root = tk.Tk()
+            self._root.withdraw()  # Esconde a janela principal
+        
+        self.window = tk.Toplevel(self._root)
         self.window.title("Organizador de Capturas - Logs e Status")
         self.window.geometry("700x500")
         
@@ -282,7 +288,7 @@ Log File: {self.organizador.log_file}
             messagebox.showerror("Erro", f"Não foi possível abrir a pasta:\n{e}")
     
     def close_window(self):
-        """Fecha a janela"""
+        """Fecha a janela de logs (mantém o root oculto para reuso)"""
         if self.window:
             self.organizador.log_handler.log_callback = None
             self.window.destroy()
@@ -291,13 +297,22 @@ Log File: {self.organizador.log_file}
 
 
 class OrganizadorCapturas:
-    def __init__(self, pasta_monitorada, script_dir):
+    def __init__(self, pasta_monitorada, script_dir, config=None):
         self.pasta_monitorada = Path(pasta_monitorada)
         self.script_dir = Path(script_dir)
         self.ativo = True
         self.pausado = False
         self.total_organizados = 0
         self.observer = None
+        self.config = config or {}
+        
+        # Configurações de comportamento
+        self.deletar_duplicatas = self.config.get('deletar_duplicatas', True)
+        self.pasta_duplicatas = self.config.get('pasta_duplicatas')  # caminho ou None
+        
+        # Cache de hashes para detecção rápida de duplicatas (evita reler todos os arquivos)
+        self._hash_cache = {}  # {hash_md5: caminho_arquivo}
+        self._cache_carregado = False
         
         # Configura logging (agora salva no diretório do script)
         self.log_file = self.script_dir / 'organizador.log'
@@ -314,8 +329,10 @@ class OrganizadorCapturas:
         self.log_handler = LogHandler()
         self.log_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
         
-        # Handler para arquivo
-        file_handler = logging.FileHandler(self.log_file, encoding='utf-8')
+        # Handler para arquivo com rotação (máx 5 MB, mantém 3 backups)
+        file_handler = RotatingFileHandler(
+            self.log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding='utf-8'
+        )
         file_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
         
         # Handler para console
@@ -361,32 +378,60 @@ class OrganizadorCapturas:
                     hash_md5.update(chunk)
             return hash_md5.hexdigest()
         except Exception as e:
-            self.logger.error(f"❌ Erro ao gerar hash de '{caminho}': {e}")
+            try:
+                self.logger.error(f"ERRO ao gerar hash de '{caminho}': {e}")
+            except AttributeError:
+                print(f"ERRO ao gerar hash de '{caminho}': {e}")
             return None
     
-    def arquivo_duplicado_existe(self, hash_arquivo, pasta_destino):
+    def _carregar_cache_hashes(self):
+        """Carrega o cache de hashes do disco (arquivo JSON) para evitar releitura."""
+        if self._cache_carregado:
+            return
+        cache_file = self.script_dir / 'hash_cache.json'
+        try:
+            if cache_file.exists():
+                with open(cache_file, 'r', encoding='utf-8') as f:
+                    self._hash_cache = json.load(f)
+                self.logger.info(f"📦 Cache de hashes carregado: {len(self._hash_cache)} entradas")
+            else:
+                self._hash_cache = {}
+        except Exception as e:
+            self.logger.warning(f"⚠️  Erro ao carregar cache de hashes: {e}")
+            self._hash_cache = {}
+        self._cache_carregado = True
+    
+    def _salvar_cache_hashes(self):
+        """Salva o cache de hashes no disco."""
+        cache_file = self.script_dir / 'hash_cache.json'
+        try:
+            with open(cache_file, 'w', encoding='utf-8') as f:
+                json.dump(self._hash_cache, f, ensure_ascii=False)
+        except Exception as e:
+            self.logger.warning(f"⚠️  Erro ao salvar cache de hashes: {e}")
+    
+    def _atualizar_cache_hash(self, caminho_arquivo, hash_valor):
+        """Adiciona/atualiza uma entrada no cache de hashes."""
+        self._hash_cache[hash_valor] = str(caminho_arquivo)
+    
+    def arquivo_duplicado_existe(self, hash_arquivo):
         """
-        Verifica se já existe arquivo com mesmo hash na pasta destino.
+        Verifica se já existe arquivo com mesmo hash usando o cache.
         
         Args:
             hash_arquivo: Hash MD5 do arquivo
-            pasta_destino: Pasta onde procurar duplicatas
             
         Returns:
             Path do arquivo duplicado ou None
         """
-        if not pasta_destino.exists():
-            return None
-        
-        try:
-            for arquivo_existente in pasta_destino.glob('*'):
-                if arquivo_existente.is_file():
-                    hash_existente = self.gerar_hash(str(arquivo_existente))
-                    if hash_existente == hash_arquivo:
-                        return arquivo_existente
-        except Exception as e:
-            self.logger.error(f"❌ Erro ao verificar duplicatas: {e}")
-        
+        self._carregar_cache_hashes()
+        caminho_cache = self._hash_cache.get(hash_arquivo)
+        if caminho_cache:
+            caminho = Path(caminho_cache)
+            if caminho.exists():
+                return caminho
+            # Entrada obsoleta, remove do cache
+            del self._hash_cache[hash_arquivo]
         return None
     
     def esperar_arquivo_estavel(self, caminho, timeout=10):
@@ -485,25 +530,48 @@ class OrganizadorCapturas:
                 self.logger.warning(f"⚠️  Arquivo não existe mais: {arquivo.name}")
                 return
             
-            # ANTI-DUPLICADO: Verifica se já existe arquivo idêntico na pasta destino
+            # ANTI-DUPLICADO: Verifica se já existe arquivo idêntico (usa cache de hashes)
             hash_arquivo = self.gerar_hash(str(arquivo))
             if hash_arquivo:
-                arquivo_duplicado = self.arquivo_duplicado_existe(hash_arquivo, pasta_destino)
+                arquivo_duplicado = self.arquivo_duplicado_existe(hash_arquivo)
                 if arquivo_duplicado:
-                    self.logger.warning(
-                        f"🗑️  Duplicata detectada: '{arquivo.name}' é idêntico a '{arquivo_duplicado.name}' - Removendo duplicata"
-                    )
-                    try:
-                        arquivo.unlink()  # Remove o arquivo duplicado
-                        self.logger.info(f"✅ Arquivo duplicado removido: {arquivo.name}")
-                        return
-                    except Exception as e:
-                        self.logger.error(f"❌ Erro ao remover duplicata '{arquivo.name}': {e}")
-                        # Continua para mover mesmo assim
+                    if self.deletar_duplicatas:
+                        self.logger.warning(
+                            f"🗑️  Duplicata detectada: '{arquivo.name}' é idêntico a '{arquivo_duplicado.name}' - Removendo"
+                        )
+                        try:
+                            arquivo.unlink()
+                            self.logger.info(f"✅ Arquivo duplicado removido: {arquivo.name}")
+                            return
+                        except Exception as e:
+                            self.logger.error(f"❌ Erro ao remover duplicata '{arquivo.name}': {e}")
+                    else:
+                        # Move duplicata para pasta separada em vez de deletar
+                        dup_pasta = Path(self.pasta_duplicatas) if self.pasta_duplicatas else self.pasta_monitorada / '00-Duplicatas'
+                        dup_pasta.mkdir(parents=True, exist_ok=True)
+                        dup_destino = dup_pasta / arquivo.name
+                        contador = 1
+                        while dup_destino.exists():
+                            nome_base = arquivo.stem
+                            extensao = arquivo.suffix
+                            dup_destino = dup_pasta / f"{nome_base}_{contador}{extensao}"
+                            contador += 1
+                        try:
+                            shutil.move(str(arquivo), str(dup_destino))
+                            self.logger.warning(
+                                f"📋 Duplicata movida para '{dup_pasta.name}': {arquivo.name}"
+                            )
+                            return
+                        except Exception as e:
+                            self.logger.error(f"❌ Erro ao mover duplicata '{arquivo.name}': {e}")
             
             # Move o arquivo
             shutil.move(str(arquivo), str(destino))
             self.total_organizados += 1
+            # Atualiza cache de hash com o novo local
+            if hash_arquivo:
+                self._atualizar_cache_hash(destino, hash_arquivo)
+                self._salvar_cache_hashes()
             self.logger.info(f"✅ Organizado: {arquivo.name} → {ano}/{mes}-{mes_nome}/{dia}/")
             
         except PermissionError:
@@ -513,10 +581,40 @@ class OrganizadorCapturas:
         except Exception as e:
             self.logger.error(f"❌ Erro ao organizar '{arquivo.name}': {e}")
     
-    def pausar(self):
-        """Pausa o monitoramento"""
-        self.pausado = True
-        self.logger.info("⏸️  Monitoramento pausado")
+    def organizar_existentes(self):
+        """
+        Varre a pasta monitorada e organiza arquivos que já estão lá (backfill).
+        Útil na primeira execução ou após mudar a pasta monitorada.
+        """
+        if not self.pasta_monitorada.exists():
+            self.logger.warning(f"⚠️  Pasta monitorada não existe: {self.pasta_monitorada}")
+            return 0
+        
+        self._carregar_cache_hashes()
+        contador = 0
+        extensoes_imagem = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
+        
+        # Coleta apenas arquivos diretamente na raiz da pasta monitorada
+        # (ignora subpastas já organizadas)
+        arquivos_raiz = [
+            f for f in self.pasta_monitorada.iterdir()
+            if f.is_file() and f.suffix.lower() in extensoes_imagem
+        ]
+        
+        self.logger.info(f"🔍 Backfill: {len(arquivos_raiz)} arquivo(s) encontrado(s) na raiz para organizar")
+        
+        for arquivo in arquivos_raiz:
+            if self.pausado:
+                break
+            try:
+                # Chama organizar_arquivo para cada um (reutiliza toda a lógica)
+                self.organizar_arquivo(str(arquivo))
+                contador += 1
+            except Exception as e:
+                self.logger.error(f"❌ Erro no backfill de '{arquivo.name}': {e}")
+        
+        self.logger.info(f"✅ Backfill concluído: {contador} arquivo(s) organizado(s)")
+        return contador
     
     def retomar(self):
         """Retoma o monitoramento"""
@@ -529,7 +627,29 @@ class OrganizadorCapturas:
         if self.observer:
             self.observer.stop()
             self.observer.join()
+            self.observer = None
         self.logger.info(f"🛑 Monitoramento encerrado. Total organizado: {self.total_organizados}")
+    
+    def reiniciar_monitoramento(self, nova_pasta=None):
+        """
+        Reinicia o observador de arquivos, opcionalmente com uma nova pasta.
+        Usado quando o usuário muda a pasta monitorada via GUI.
+        """
+        self.parar()
+        if nova_pasta:
+            self.pasta_monitorada = Path(nova_pasta)
+            self._cache_carregado = False  # Força recarregamento do cache
+            self._hash_cache = {}
+        if self.ativo and self.pasta_monitorada.exists():
+            event_handler = ManipuladorArquivos(self)
+            self.observer = Observer()
+            self.observer.schedule(
+                event_handler,
+                str(self.pasta_monitorada),
+                recursive=False
+            )
+            self.observer.start()
+            self.logger.info(f"👁️  Monitoramento reiniciado: {self.pasta_monitorada}")
 
 
 class ManipuladorArquivos(FileSystemEventHandler):
@@ -557,9 +677,10 @@ class ManipuladorArquivos(FileSystemEventHandler):
 class AplicativoTray:
     """Aplicativo com ícone na bandeja do sistema"""
     
-    def __init__(self, pasta_monitorada, script_dir):
+    def __init__(self, pasta_monitorada, script_dir, config=None):
         self.script_dir = script_dir
-        self.organizador = OrganizadorCapturas(pasta_monitorada, script_dir)
+        self.config = config or {}
+        self.organizador = OrganizadorCapturas(pasta_monitorada, script_dir, config=self.config)
         self.icon = None
         self.log_window = LogWindow(self.organizador)
         
@@ -623,13 +744,13 @@ class AplicativoTray:
         thread.start()
     
     def configurar_pasta(self, icon, item):
-        """Permite reconfigurar a pasta monitorada"""
+        """Permite reconfigurar a pasta monitorada e reinicia o monitoramento"""
         root = tk.Tk()
         root.withdraw()
         
         nova_pasta = filedialog.askdirectory(
             title="Selecione a pasta para monitorar",
-            initialdir=self.organizador.pasta_monitorada
+            initialdir=str(self.organizador.pasta_monitorada)
         )
         
         if nova_pasta:
@@ -637,10 +758,52 @@ class AplicativoTray:
             config_manager = ConfigManager()
             config_manager.set_pasta_monitorada(nova_pasta)
             
+            # Atualiza config em memória e reinicia o observador
+            self.config['pasta_monitorada'] = nova_pasta
+            self.organizador.reiniciar_monitoramento(nova_pasta=nova_pasta)
+            
+            # Atualiza o checkbox de auto-start no menu (recria o ícone)
+            if self.icon:
+                self.icon.menu = pystray.Menu(
+                    pystray.MenuItem(
+                        "Organizador de Capturas",
+                        self.mostrar_status,
+                        default=True
+                    ),
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem(
+                        "📊 Ver Logs e Status",
+                        self.mostrar_status
+                    ),
+                    pystray.MenuItem(
+                        "⏸️ Pausar",
+                        self.pausar_monitoramento
+                    ),
+                    pystray.MenuItem(
+                        "▶️ Retomar",
+                        self.retomar_monitoramento
+                    ),
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem(
+                        "⚙️ Configurar Pasta",
+                        self.configurar_pasta
+                    ),
+                    pystray.MenuItem(
+                        "🚀 Iniciar com Windows",
+                        self.toggle_autostart,
+                        checked=lambda item: WindowsAutoStart.esta_habilitado() if sys.platform == 'win32' else False
+                    ),
+                    pystray.Menu.SEPARATOR,
+                    pystray.MenuItem(
+                        "🚪 Sair",
+                        self.sair
+                    )
+                )
+                self.icon.update_menu()
+            
             messagebox.showinfo(
                 "Configuração Atualizada",
-                f"Nova pasta configurada:\n{nova_pasta}\n\n"
-                "Reinicie o aplicativo para aplicar as mudanças."
+                f"Nova pasta configurada e monitoramento reiniciado:\n{nova_pasta}"
             )
         
         root.destroy()
@@ -766,6 +929,12 @@ class AplicativoTray:
     
     def executar(self):
         """Executa o aplicativo"""
+        # Backfill: organiza arquivos que já estão na pasta (usuários que já têm capturas soltas)
+        try:
+            self.organizador.organizar_existentes()
+        except Exception as e:
+            self.organizador.logger.error(f"❌ Erro no backfill inicial: {e}")
+        
         # Inicia o monitoramento
         self.iniciar_monitoramento()
         
@@ -854,7 +1023,8 @@ if __name__ == "__main__":
     
     # Gerenciador de configuração
     config_manager = ConfigManager()
-    pasta_monitorada = config_manager.get_pasta_monitorada()
+    config = dict(config_manager.config)  # Carrega config completo (inclui deletar_duplicatas, etc.)
+    pasta_monitorada = config.get('pasta_monitorada')
     
     # Se não tiver pasta configurada, pede ao usuário
     if not pasta_monitorada:
@@ -864,7 +1034,9 @@ if __name__ == "__main__":
             print("❌ Nenhuma pasta selecionada. Encerrando...")
             sys.exit(1)
         
-        config_manager.set_pasta_monitorada(pasta_monitorada)
+        config['pasta_monitorada'] = pasta_monitorada
+        config_manager.config = config
+        config_manager.save_config()
         print(f"✅ Pasta configurada: {pasta_monitorada}")
     
     # Verifica se a pasta existe
@@ -876,11 +1048,13 @@ if __name__ == "__main__":
         if not pasta_monitorada:
             sys.exit(1)
         
-        config_manager.set_pasta_monitorada(pasta_monitorada)
+        config['pasta_monitorada'] = pasta_monitorada
+        config_manager.config = config
+        config_manager.save_config()
     
     # Verifica se há suporte gráfico
     try:
-        app = AplicativoTray(pasta_monitorada, script_dir)
+        app = AplicativoTray(pasta_monitorada, script_dir, config=config)
         app.executar()
     except Exception as e:
         print(f"❌ Erro ao iniciar interface gráfica: {e}")
