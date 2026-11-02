@@ -6,7 +6,7 @@
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-brightgreen.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Release](https://img.shields.io/github/v/release/fabri2896/organizador-de-capturas?label=Release)
-![Downloads Latest](https://img.shields.io/github/downloads/fabri2896/organizador-de-capturas/latest/total)
+![Downloads](https://img.shields.io/github/downloads/fabri2896/organizador-de-capturas/latest/total)
 
 **Organize suas capturas de tela automaticamente por data, detecte duplicatas e mantenha tudo limpo!**
 
