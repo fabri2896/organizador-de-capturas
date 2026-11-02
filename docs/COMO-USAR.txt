@@ -1,0 +1,80 @@
+COMO USAR
+================================================================
+
+INSTALAÇÃO
+----------
+1. Baixe OrganizadorCapturas-2.0.2-Setup.exe na página de releases
+2. Execute e escolha:
+   - "Instalar para todos os usuários" (pede admin) ou "Apenas para mim"
+   - A pasta de instalação (pode alterar)
+   - ☑ Iniciar com o Windows — opcional, marcado por padrão
+   - ☐ Atalho na Área de Trabalho — opcional
+3. Ao final, deixe marcado "Abrir o Organizador agora"
+
+PRIMEIRA EXECUÇÃO
+-----------------
+O programa pergunta qual pasta monitorar. Escolha a pasta onde suas capturas
+caem — por exemplo:
+
+    C:\Users\<você>\Pictures\Screenshots
+    C:\Users\<você>\Box\prints
+    C:\Users\<você>\OneDrive\Imagens\Capturas de tela
+
+A escolha fica salva em %APPDATA%\OrganizadorCapturas\config.json.
+Nas próximas vezes ele já abre monitorando essa pasta.
+
+O ÍCONE DA BANDEJA
+------------------
+O ícone é uma pasta verde com uma foto dentro.
+
+    Verde    monitorando
+    Amarelo  pausado
+    Vermelho parado
+
+No Windows 11 ele pode começar escondido no menu "︿" (ícones ocultos),
+ao lado do relógio. Arraste para a barra para deixá-lo fixo, ou vá em
+Configurações > Personalização > Barra de tarefas > Ícones da bandeja.
+
+MENU (botão direito no ícone)
+-----------------------------
+    Organizador de Capturas   abre a janela de logs e status (duplo clique também)
+    Ver Logs e Status         mesma janela
+    Pausar                    para de organizar; o ícone fica amarelo
+    Retomar                   volta a organizar
+    Configurar Pasta          troca a pasta monitorada e organiza a nova
+    Iniciar com Windows       liga/desliga o auto-start (∨ marca quando ativo)
+    Sair                      encerra o programa
+
+JANELA DE LOGS
+--------------
+Mostra em tempo real o que está sendo organizado, quantos arquivos foram
+movidos e o status atual. Útil para conferir se está tudo funcionando.
+
+DICAS
+-----
+- Capturas com data no nome usam essa data (ex.: 2026-05-15 foto.png)
+- Sem data no nome, usa a data de modificação do arquivo
+- Nomes repetidos viram "nome_1.png", "nome_2.png" (nunca sobrescreve)
+- Duplicatas exatas (mesmo conteúdo) são removidas por padrão
+
+SHAREX
+------
+Para as capturas caírem direto na pasta monitorada, no ShareX vá em
+Configurações do aplicativo > Caminhos e deixe "Padrão de subpasta" VAZIO.
+Se ficar algo como %y-%mo, o ShareX cria uma subpasta por mês e as capturas
+novas demoram mais para serem detectadas.
+
+PROBLEMAS COMUNS
+----------------
+Símbolo de aviso do Windows na instalação
+    Veja ANTIVIRUS-BLOQUEOU.txt
+
+O ícone não aparece
+    Provavelmente está no menu "︿" da bandeja (Windows 11)
+
+Dois ícones iguais
+    O programa não permite duas cópias: a segunda mostra um aviso e fecha
+
+Nada é organizado
+    Confira no menu se está "Ativo" (verde) e se a pasta em Configurações
+    é realmente a pasta onde as capturas estão caindo

@@ -1,0 +1,49 @@
+O WINDOWS BLOQUEOU O INSTALADOR? LEIA ISTO
+================================================================
+
+Isso NÃO é vírus. É o SmartScreen avisando que o arquivo não tem assinatura
+digital paga (certificado de code signing custa de US$ 100 a US$ 300 por ano).
+
+COMO PROSSEGUIR
+---------------
+Tela azul "O Windows protegeu o seu PC":
+
+    1. Clique em "Mais informações"
+    2. Clique em "Executar assim mesmo"
+
+Se o botão "Executar assim mesmo" não aparecer, clique com o botão direito
+no arquivo > Propriedades > marque "Desbloquear" > OK.
+
+Se o Windows Defender colocar em quarentena:
+
+    1. Segurança do Windows > Proteção contra vírus e ameaças
+    2. Histórico de proteção
+    3. Encontre o item e escolha "Permitir no dispositivo"
+
+POR QUE ACONTECE
+----------------
+- O programa é feito em Python e empacotado com PyInstaller. Muitos vírus
+  também usam PyInstaller, então o Windows trata com desconfiança.
+- Programas novos (com poucos downloads) demoram a ganhar "reputação".
+  Conforme mais gente baixa, os avisos diminuem.
+- Nenhum antivírus conhece o arquivo previamente; a heurística reage ao
+  empacotador, não ao código.
+
+COMO CONFERIR QUE É SEGURO
+--------------------------
+1. O código-fonte é aberto (licença MIT) e está no GitHub:
+   https://github.com/fabri2896/organizador-de-capturas
+2. Você pode compilar do zero na sua máquina: scripts\build.bat
+3. Pode enviar o arquivo para o VirusTotal e ver o resultado
+   (programas empacotados às vezes marcam 1-2 motores por heurística)
+
+COMO ELIMINAR O AVISO DE VEZ
+----------------------------
+Assinatura digital (certificado de code signing). Veja COMO-ASSINAR-EXE.txt.
+Com certificado EV o SmartScreen confia imediatamente; com certificado comum,
+leva alguns meses e downloads para ganhar reputação.
+
+RESUMO
+------
+Aviso do SmartScreen = falta de assinatura digital, não detecção de vírus.
+"Mais informações" > "Executar assim mesmo" é o caminho normal.

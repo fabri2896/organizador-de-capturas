@@ -1,0 +1,41 @@
+ORGANIZADOR DE CAPTURAS DE TELA — v2.0.2
+================================================================
+
+O que ele faz
+-------------
+Fica na bandeja do sistema monitorando uma pasta. Toda captura que aparece
+lá é movida para uma estrutura por data:
+
+    pasta-monitorada\
+    └── 2026\
+        └── 11-Novembro\
+            └── 02\
+                ├── captura_1.png
+                └── captura_2.png
+
+Também detecta duplicatas por hash e organiza pastas legadas fora do padrão.
+
+Documentos
+----------
+COMO-USAR.txt             Instalação e uso no dia a dia  (comece por aqui)
+INSTRUCOES-WINDOWS.txt    Requisitos, instalar, atualizar, desinstalar
+GERENCIAR-AUTO-START.txt  Ligar/desligar o início automático com o Windows
+ANTIVIRUS-BLOQUEOU.txt    Aviso do Windows/SmartScreen — não é vírus
+COMO-ASSINAR-EXE.txt      Assinatura digital (para quem for distribuir)
+
+Links
+-----
+Código e downloads: https://github.com/fabri2896/organizador-de-capturas
+Problemas/sugestões: https://github.com/fabri2896/organizador-de-capturas/issues
+
+Onde ficam os dados
+-------------------
+%APPDATA%\OrganizadorCapturas\
+
+    config.json       pasta monitorada
+    organizador.log   log de operações (rotativo: 5 MB x 3)
+    hash_cache.json   cache de duplicatas
+
+Ficam fora da pasta de instalação de propósito, para funcionar mesmo quando
+o programa é instalado em Program Files. Configurações antigas (salvas ao
+lado do executável) são migradas automaticamente na primeira execução.
