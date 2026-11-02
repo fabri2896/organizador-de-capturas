@@ -13,9 +13,9 @@ AppName=Organizador de Capturas
 AppVersion=2.0.2
 AppVerName=Organizador de Capturas 2.0.2
 AppPublisher=fabri2896
-AppPublisherURL=https://github.com/fabri2896/organizador-capturas-github
-AppSupportURL=https://github.com/fabri2896/organizador-capturas-github/issues
-AppUpdatesURL=https://github.com/fabri2896/organizador-capturas-github/releases
+AppPublisherURL=https://github.com/fabri2896/organizador-de-capturas
+AppSupportURL=https://github.com/fabri2896/organizador-de-capturas/issues
+AppUpdatesURL=https://github.com/fabri2896/organizador-de-capturas/releases
 AppCopyright=Copyright (C) 2026 fabri2896 - Licenca MIT
 
 ; --- Onde instalar (página de pasta sempre visível: usuário pode mudar) ---

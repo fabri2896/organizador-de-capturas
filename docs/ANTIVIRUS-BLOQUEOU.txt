@@ -32,7 +32,7 @@ POR QUE ACONTECE
 COMO CONFERIR QUE É SEGURO
 --------------------------
 1. O código-fonte é aberto (licença MIT) e está no GitHub:
-   https://github.com/fabri2896/organizador-capturas-github
+   https://github.com/fabri2896/organizador-de-capturas
 2. Você pode compilar do zero na sua máquina: scripts\build.bat
 3. Pode enviar o arquivo para o VirusTotal e ver o resultado
    (programas empacotados às vezes marcam 1-2 motores por heurística)

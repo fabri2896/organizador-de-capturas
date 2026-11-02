@@ -5,8 +5,8 @@
 ![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-brightgreen.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Release](https://img.shields.io/github/v/release/fabri2896/organizador-capturas-github?label=Release)
-![Downloads](https://img.shields.io/github/downloads/fabri2896/organizador-capturas-github/total?label=Downloads)
+![Release](https://img.shields.io/github/v/release/fabri2896/organizador-de-capturas?label=Release)
+![Downloads](https://img.shields.io/github/downloads/fabri2896/organizador-de-capturas/total?label=Downloads)
 
 **Organize suas capturas de tela automaticamente por data, detecte duplicatas e mantenha tudo limpo!**
 
@@ -122,7 +122,7 @@ pip install watchdog pystray pillow
 **Sem necessidade de instalar Python.**
 
 1. **Baixe o instalador mais recente:**
-   - Acesse: [Releases](https://github.com/fabri2896/organizador-capturas-github/releases/latest)
+   - Acesse: [Releases](https://github.com/fabri2896/organizador-de-capturas/releases/latest)
    - Baixe: `OrganizadorCapturas-2.0.1-Setup.exe`
 
 2. **Execute e siga o assistente:**
@@ -141,8 +141,8 @@ O instalador cria atalhos no Menu Iniciar, registra a entrada de auto-start no
 
 1. **Clone o repositório:**
    ```bash
-   git clone https://github.com/fabri2896/organizador-capturas-github.git
-   cd organizador-capturas-github
+   git clone https://github.com/fabri2896/organizador-de-capturas.git
+   cd organizador-de-capturas
    ```
 
 2. **Instale as dependências:**
@@ -362,7 +362,7 @@ Agora toda captura que você fizer será **automaticamente organizada**! 🎉
 ## 📂 Estrutura do Projeto
 
 ```
-organizador-capturas-github/
+organizador-de-capturas/
 ├── organizador_tray.py          # Programa principal (tray + organização)
 ├── OrganizadorCapturas.spec     # Receita do PyInstaller
 ├── app.ico                      # Ícone do EXE (gerado por scripts/gerar_assets.py)
@@ -385,10 +385,7 @@ organizador-capturas-github/
 │   ├── wizsmall.png             # Arte pequena (gerada)
 │   ├── iniciar_organizador.bat  # Iniciar sem instalar (código fonte)
 │   ├── iniciar_organizador.sh   # Iniciar no Linux
-│   ├── controle.sh              # start/stop/status/log (Linux)
-│   ├── criar_atalho_inicializacao.vbs
-│   ├── verificar_auto_start.bat
-│   └── limpar_auto_start.bat
+│   └── controle.sh              # start/stop/status/log (Linux)
 └── tests/
     └── test_organizador.py      # Testes (rode sem pytest, veja abaixo)
 ```
@@ -489,8 +486,8 @@ Atualmente não há opção, mas é fácil modificar o código (comentar a seç�
 
 Tem dúvidas? Sugestões? Bugs?
 
-- 🐛 **Issues**: [GitHub Issues](https://github.com/fabri2896/organizador-capturas-github/issues)
-- 💬 **Discussões**: [GitHub Discussions](https://github.com/fabri2896/organizador-capturas-github/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/fabri2896/organizador-de-capturas/issues)
+- 💬 **Discussões**: [GitHub Discussions](https://github.com/fabri2896/organizador-de-capturas/discussions)
 
 ---
 
