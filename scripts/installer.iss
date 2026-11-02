@@ -1,8 +1,8 @@
 ; ============================================================================
-;  Instalador do Organizador de Capturas — v2.0.1
+;  Instalador do Organizador de Capturas — v2.0.2
 ;  Inno Setup 6.x  (https://jrsoftware.org/isinfo.php)
 ;
-;  Gera: Output\OrganizadorCapturas-2.0.1-Setup.exe
+;  Gera: Output\OrganizadorCapturas-2.0.2-Setup.exe
 ;  Compilar com: ISCC.exe scripts\installer.iss
 ; ============================================================================
 
@@ -10,8 +10,8 @@
 ; --- Identidade (AppId fixo: permite atualizar por cima sem duplicar) ---
 AppId={{A7F3D2C1-5E4B-4C9A-9B21-7D6E8F0A1B2C}
 AppName=Organizador de Capturas
-AppVersion=2.0.1
-AppVerName=Organizador de Capturas 2.0.1
+AppVersion=2.0.2
+AppVerName=Organizador de Capturas 2.0.2
 AppPublisher=fabri2896
 AppPublisherURL=https://github.com/fabri2896/organizador-capturas-github
 AppSupportURL=https://github.com/fabri2896/organizador-capturas-github/issues
@@ -38,13 +38,13 @@ PrivilegesRequiredOverridesAllowed=dialog
 
 ; --- Saída ---
 OutputDir=..\Output
-OutputBaseFilename=OrganizadorCapturas-2.0.1-Setup
+OutputBaseFilename=OrganizadorCapturas-2.0.2-Setup
 LicenseFile=..\LICENSE
 Compression=lzma2/max
 SolidCompression=yes
 
 ; --- Metadados do arquivo de instalação ---
-VersionInfoVersion=2.0.1.0
+VersionInfoVersion=2.0.2.0
 VersionInfoCompany=fabri2896
 VersionInfoDescription=Instalador do Organizador de Capturas de Tela
 VersionInfoCopyright=Copyright (C) 2026 fabri2896

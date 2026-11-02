@@ -118,6 +118,30 @@ class WindowsAutoStart:
             return False, f"Erro ao desabilitar auto-start: {e}"
 
 
+_MUTEX_INSTANCIA = None
+
+
+def ja_existe_outra_instancia():
+    """
+    Impede duas cópias do app rodando ao mesmo tempo.
+
+    Sem isso, duas instâncias monitoram a mesma pasta e brigam pelos mesmos
+    arquivos — WinError 5 (acesso negado), 183 (já existe) e 3 (não encontrado).
+    O mutex é liberado pelo Windows quando o processo termina.
+    """
+    global _MUTEX_INSTANCIA
+    if sys.platform != 'win32':
+        return False
+    try:
+        import ctypes
+        _MUTEX_INSTANCIA = ctypes.windll.kernel32.CreateMutexW(
+            None, False, 'Local\\OrganizadorCapturasInstanciaUnica'
+        )
+        return ctypes.windll.kernel32.GetLastError() == 183  # ERROR_ALREADY_EXISTS
+    except Exception:
+        return False
+
+
 def pasta_dados():
     """
     Pasta onde o app grava config, log e cache: %APPDATA%\\OrganizadorCapturas.
@@ -368,13 +392,21 @@ class OrganizadorCapturas:
         )
         file_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
         
-        # Handler para console
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+        # Handler para console (só quando existe console; no EXE sem console
+        # sys.stdout é None e os emojis estouram o encoding do cp1252)
+        console_handler = None
+        if sys.stdout is not None:
+            try:
+                sys.stdout.reconfigure(errors='backslashreplace')
+            except Exception:
+                pass
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
         
         # Adiciona todos os handlers
         self.logger.addHandler(file_handler)
-        self.logger.addHandler(console_handler)
+        if console_handler:
+            self.logger.addHandler(console_handler)
         self.logger.addHandler(self.log_handler)
         
         # Evita propagação para o logger raiz
@@ -527,14 +559,19 @@ class OrganizadorCapturas:
         if arquivo.suffix.lower() not in extensoes_imagem:
             return
         
-        # Evita organizar arquivo que já está no destino correto (evita loop com watchdog)
+        # Evita reprocessar arquivo que já está no destino correto.
+        # O watcher é recursivo e dispara evento quando o PRÓPRIO app move o
+        # arquivo — sem esta checagem ele se reprocessa e se apaga como
+        # "duplicata de si mesmo".
+        # Estrutura final: Ano/Mês-Dia/Dia/arquivo.png  -> 4 partes
         try:
             rel = arquivo.relative_to(self.pasta_monitorada)
             partes = rel.parts
-            # Se já está em estrutura Ano/Mês-Dia/Dia/ com mesmo nome, já está organizado
-            if len(partes) == 3:
-                ano, mes_dia, arquivo_nome = partes
-                if ano.isdigit() and len(ano) == 4 and arquivo_nome == arquivo.name:
+            if len(partes) == 4:
+                ano, mes_dia, dia, _nome = partes
+                if (ano.isdigit() and len(ano) == 4
+                        and '-' in mes_dia
+                        and dia.isdigit()):
                     return
         except (ValueError, OSError):
             pass
@@ -577,6 +614,9 @@ class OrganizadorCapturas:
             hash_arquivo = self.gerar_hash(str(arquivo))
             if hash_arquivo:
                 arquivo_duplicado = self.arquivo_duplicado_existe(hash_arquivo)
+                # Nunca tratar o próprio arquivo como duplicata dele mesmo
+                if arquivo_duplicado and Path(arquivo_duplicado) == arquivo:
+                    arquivo_duplicado = None
                 if arquivo_duplicado:
                     if self.deletar_duplicatas:
                         self.logger.warning(
@@ -659,6 +699,11 @@ class OrganizadorCapturas:
         self.logger.info(f"✅ Backfill concluído: {contador} arquivo(s) organizado(s)")
         return contador
     
+    def pausar(self):
+        """Pausa o monitoramento (o observer continua vivo, só ignora arquivos)"""
+        self.pausado = True
+        self.logger.info("⏸️  Monitoramento pausado")
+    
     def retomar(self):
         """Retoma o monitoramento"""
         self.pausado = False
@@ -677,22 +722,33 @@ class OrganizadorCapturas:
         """
         Reinicia o observador de arquivos, opcionalmente com uma nova pasta.
         Usado quando o usuário muda a pasta monitorada via GUI.
+
+        Atenção: parar() desliga self.ativo (é o desligamento definitivo do app),
+        então religamos aqui — sem isso o monitoramento nunca voltava ao trocar
+        de pasta, e o log mostrava só "🛑 Monitoramento encerrado".
         """
         self.parar()
+        self.ativo = True
+        self.pausado = False
         if nova_pasta:
             self.pasta_monitorada = Path(nova_pasta)
             self._cache_carregado = False  # Força recarregamento do cache
             self._hash_cache = {}
-        if self.ativo and self.pasta_monitorada.exists():
+        if self.pasta_monitorada.exists():
             event_handler = ManipuladorArquivos(self)
             self.observer = Observer()
             self.observer.schedule(
                 event_handler,
                 str(self.pasta_monitorada),
-                recursive=False
+                recursive=True
             )
             self.observer.start()
             self.logger.info(f"👁️  Monitoramento reiniciado: {self.pasta_monitorada}")
+            # Organiza o que já existe na pasta nova, sem travar a interface
+            if nova_pasta:
+                threading.Thread(target=self.organizar_existentes, daemon=True).start()
+        else:
+            self.logger.warning(f"⚠️  Pasta não existe, monitoramento não reiniciado: {self.pasta_monitorada}")
 
 
 class ManipuladorArquivos(FileSystemEventHandler):
@@ -1123,6 +1179,22 @@ def selecionar_pasta_inicial():
 
 
 if __name__ == "__main__":
+    # Instância única: sem isso, duas cópias brigam pelos mesmos arquivos
+    if ja_existe_outra_instancia():
+        try:
+            raiz_aviso = tk.Tk()
+            raiz_aviso.withdraw()
+            messagebox.showinfo(
+                "Organizador de Capturas",
+                "O Organizador já está rodando.\n\n"
+                "Procure o ícone 📁 na bandeja do sistema. No Windows 11 ele "
+                "costuma ficar no menu de ícones ocultos (︿), ao lado do relógio."
+            )
+            raiz_aviso.destroy()
+        except Exception:
+            pass
+        sys.exit(0)
+
     # Diretório do script
     script_dir = Path(__file__).parent
     
