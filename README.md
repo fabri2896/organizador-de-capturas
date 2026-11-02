@@ -163,40 +163,38 @@ O instalador cria atalhos no Menu Iniciar, registra a entrada de auto-start no
 
 ## 🎮 Uso
 
-### Windows
+### Windows (versão instalada)
 
-**Iniciar pela primeira vez:**
-```bash
-# Duplo clique ou:
-iniciar_organizador.bat
-```
+Depois de instalar, o programa já sobe e fica na bandeja. O ícone é uma pasta
+verde com uma foto dentro — no Windows 11 ele pode começar no menu **"︿"**
+(ícones ocultos), ao lado do relógio.
 
-**Auto-start (iniciar com Windows):**
-1. Execute o organizador
-2. Clique com botão direito no ícone da bandeja
-3. Selecione **"🚀 Iniciar com Windows"**
-4. Pronto! ✅
+**Menu do ícone (botão direito):**
 
-**Ou crie manualmente o atalho:**
-```bash
-# Duplo clique:
-criar_atalho_inicializacao.vbs
-```
+| Item | O que faz |
+|---|---|
+| **Ver Logs e Status** | janela com o que foi organizado (duplo clique também abre) |
+| **⏸️ Pausar / ▶️ Retomar** | interrompe e retoma a organização |
+| **⚙️ Configurar Pasta** | troca a pasta monitorada e organiza a nova |
+| **🚀 Iniciar com Windows** | liga/desliga o auto-start (marca "∨" quando ativo) |
+| **🚪 Sair** | encerra o programa |
 
-### Linux
+**Cores do ícone:** verde = monitorando · amarelo = pausado · vermelho = parado.
+
+### Linux (código fonte)
 
 **Iniciar:**
 ```bash
-./iniciar_organizador.sh
+python3 organizador_tray.py
 ```
 
 **Controle via terminal:**
 ```bash
-./controle.sh start    # Inicia em background
-./controle.sh stop     # Para o organizador
-./controle.sh restart  # Reinicia
-./controle.sh status   # Verifica se está rodando
-./controle.sh log      # Vê logs em tempo real
+./scripts/controle.sh start    # Inicia em background
+./scripts/controle.sh stop     # Para o organizador
+./scripts/controle.sh restart  # Reinicia
+./scripts/controle.sh status   # Verifica se está rodando
+./scripts/controle.sh log      # Vê logs em tempo real
 ```
 
 ---
@@ -365,24 +363,57 @@ Agora toda captura que você fizer será **automaticamente organizada**! 🎉
 
 ```
 organizador-capturas-github/
-├── organizador_tray.py              # Script principal
-├── iniciar_organizador.bat          # Inicializador Windows
-├── iniciar_organizador.sh           # Inicializador Linux
-├── controle.sh                      # Script de controle (Linux)
-├── criar_atalho_inicializacao.vbs   # Auto-start Windows
-├── LEIA-ME.txt                      # Instruções gerais
-├── INSTRUCOES-WINDOWS.txt           # Guia Windows
-├── README.md                        # Este arquivo
-├── requirements.txt                 # Dependências Python
-├── LICENSE                          # Licença MIT
-└── .gitignore                       # Arquivos ignorados
+├── organizador_tray.py          # Programa principal (tray + organização)
+├── OrganizadorCapturas.spec     # Receita do PyInstaller
+├── app.ico                      # Ícone do EXE (gerado por scripts/gerar_assets.py)
+├── version_info.txt             # Metadados de versão do EXE
+├── requirements.txt             # Dependências Python
+├── README.md                    # Este arquivo
+├── LICENSE                      # Licença MIT
+├── docs/                        # Documentação para o usuário
+│   ├── LEIA-ME.txt
+│   ├── COMO-USAR.txt
+│   ├── INSTRUCOES-WINDOWS.txt
+│   ├── GERENCIAR-AUTO-START.txt
+│   ├── ANTIVIRUS-BLOQUEOU.txt
+│   └── COMO-ASSINAR-EXE.txt
+├── scripts/
+│   ├── build.bat                # Build completo: EXE + instalador
+│   ├── gerar_assets.py          # Gera app.ico e artes do instalador
+│   ├── installer.iss            # Instalador (Inno Setup 6)
+│   ├── wizard.png               # Arte do assistente (gerada)
+│   ├── wizsmall.png             # Arte pequena (gerada)
+│   ├── iniciar_organizador.bat  # Iniciar sem instalar (código fonte)
+│   ├── iniciar_organizador.sh   # Iniciar no Linux
+│   ├── controle.sh              # start/stop/status/log (Linux)
+│   ├── criar_atalho_inicializacao.vbs
+│   ├── verificar_auto_start.bat
+│   └── limpar_auto_start.bat
+└── tests/
+    └── test_organizador.py      # Testes (rode sem pytest, veja abaixo)
 ```
 
-**Arquivos criados automaticamente:**
+**Arquivos criados em tempo de execução** (em `%APPDATA%\OrganizadorCapturas\`):
+
 ```
-config.json                          # Configuração da pasta monitorada
-organizador.log                      # Log de operações
+config.json         # Pasta monitorada e preferências
+organizador.log     # Log de operações (rotativo)
+hash_cache.json     # Cache de duplicatas
 ```
+
+### Desenvolvimento
+
+```bash
+# Testes (não precisa de pytest, roda direto)
+python tests/test_organizador.py
+
+# Build completo: gera o EXE e o instalador
+scripts\build.bat
+```
+
+O `build.bat` roda `scripts/gerar_assets.py` (ícone a partir do código),
+o PyInstaller e o Inno Setup, nessa ordem. O resultado do instalador sai em
+`Output\OrganizadorCapturas-<versão>-Setup.exe`.
 
 ---
 
@@ -418,7 +449,12 @@ Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para ma
 
 ## 🙏 Créditos
 
-Desenvolvido com ❤️ por **fabri2896**
+**Idealização, testes e decisões de produto:** [fabri2896](https://github.com/fabri2896)
+
+**Implementação, correções e documentação:** fabri2896 + **DeepSeek** (modelo de IA, via DeepSeek Harness)
+
+O programa, o ícone (desenhado por código em `desenhar_icone`), o instalador e a
+documentação foram feitos nessa parceria. O histórico completo fica nos commits.
 
 ### Bibliotecas utilizadas:
 - [watchdog](https://github.com/gorakhargosh/watchdog) - Monitoramento de sistema de arquivos
@@ -465,11 +501,3 @@ Tem dúvidas? Sugestões? Bugs?
 Made with ❤️ and Python 🐍
 
 </div>
-n 🐍
-
-</div>
-v>
-ython 🐍
-
-</div>
-v>

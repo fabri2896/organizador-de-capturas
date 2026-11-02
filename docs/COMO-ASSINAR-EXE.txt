@@ -1,216 +1,62 @@
-================================================================================
-  🔐 COMO "ASSINAR" SEU EXE - GUIA COMPLETO
-================================================================================
-
-Existem 2 formas de assinar um executável:
-
-================================================================================
-  📝 OPÇÃO 1 - METADADOS NO EXE (GRÁTIS) ⭐ RECOMENDADO
-================================================================================
-
-Esta opção adiciona informações DENTRO do EXE que aparecem ao:
-  • Clicar com botão direito > Propriedades > Detalhes
-  • Executar o arquivo (mostra "Desenvolvido por: SEU NOME")
-
-✅ VANTAGENS:
-  • 100% GRATUITO
-  • Profissional
-  • Fácil de fazer
-  • Personalizado
-
-❌ DESVANTAGENS:
-  • NÃO remove aviso "Editor desconhecido" do Windows
-  • NÃO é verificado por autoridade certificadora
-
-
-🔧 COMO FAZER:
---------------
-
-1. Abra o arquivo "version_info.txt" em qualquer editor de texto
-
-2. Edite as seguintes linhas COM SUAS INFORMAÇÕES:
-
-   StringStruct(u'CompanyName', u'SEU NOME OU EMPRESA'),
-   StringStruct(u'FileDescription', u'Descrição do seu programa'),
-   StringStruct(u'LegalCopyright', u'© 2026 SEU NOME. Licença MIT.'),
-
-3. Salve o arquivo
-
-4. Execute "compilar_para_exe.bat"
-
-5. Pronto! Seu EXE agora tem sua assinatura! ✅
-
-
-📋 EXEMPLO DE PERSONALIZAÇÃO:
------------------------------
-
-ANTES (padrão):
-  StringStruct(u'CompanyName', u'fabri2896'),
-
-DEPOIS (personalizado):
-  StringStruct(u'CompanyName', u'João Silva - Desenvolvedor'),
-
-
-OUTROS CAMPOS QUE VOCÊ PODE MUDAR:
-  • FileDescription  - O que o programa faz
-  • FileVersion      - Versão do arquivo (ex: 1.0.2.0)
-  • ProductName      - Nome do produto
-  • ProductVersion   - Versão do produto
-  • LegalCopyright   - Direitos autorais
-
-
-🔍 COMO VER SUA ASSINATURA NO EXE:
-----------------------------------
-
-Depois de compilar:
-  1. Vá em: dist\OrganizadorCapturas.exe
-  2. Botão direito > Propriedades
-  3. Aba "Detalhes"
-  
-Você verá:
-  ✅ Nome do arquivo
-  ✅ Descrição
-  ✅ Desenvolvedor (seu nome!)
-  ✅ Versão
-  ✅ Copyright
-
-
-================================================================================
-  🔒 OPÇÃO 2 - CERTIFICADO DIGITAL (PAGO) 💰
-================================================================================
-
-Esta opção adiciona um CERTIFICADO DIGITAL VERIFICADO ao EXE.
-
-✅ VANTAGENS:
-  • Remove aviso "Editor desconhecido"
-  • Windows confia 100%
-  • Antivírus confiam mais
-  • Muito profissional
-
-❌ DESVANTAGENS:
-  • CARO ($100-400 USD por ano!)
-  • Processo burocrático
-  • Precisa validar identidade
-  • Precisa renovar anualmente
-
-
-💰 ONDE COMPRAR:
----------------
-
-Autoridades Certificadoras confiáveis:
-  • DigiCert     - https://www.digecert.com/code-signing
-  • Sectigo      - https://sectigo.com/code-signing
-  • GlobalSign   - https://www.globalsign.com/code-signing
-
-PREÇOS (2026):
-  • Individual:  $150-250 USD/ano
-  • Empresa:     $250-400 USD/ano
-
-
-🔧 COMO USAR (após comprar):
-----------------------------
-
-1. Receba o certificado (.pfx ou .p12)
-
-2. Instale o Windows SDK:
-   https://developer.microsoft.com/windows/downloads/windows-sdk/
-
-3. Assine o EXE com signtool:
-
-   signtool sign ^
-     /f "MeuCertificado.pfx" ^
-     /p "SENHA_DO_CERTIFICADO" ^
-     /t http://timestamp.digicert.com ^
-     /fd SHA256 ^
-     OrganizadorCapturas.exe
-
-4. Pronto! Seu EXE está assinado digitalmente! ✅
-
-
-🔍 COMO VER O CERTIFICADO:
--------------------------
-
-  1. Botão direito no EXE > Propriedades
-  2. Aba "Assinaturas Digitais"
-  3. Ver detalhes do certificado
-
-
-================================================================================
-  🤔 QUAL ESCOLHER?
-================================================================================
-
-PARA PROJETOS PESSOAIS / OPEN SOURCE:
-  ➡️ Use OPÇÃO 1 (Metadados - GRÁTIS)
-  • Bom o suficiente
-  • Profissional
-  • Sem custos
-
-PARA PROJETOS COMERCIAIS / EMPRESARIAIS:
-  ➡️ Use OPÇÃO 2 (Certificado Digital)
-  • Vale o investimento
-  • Clientes confiam mais
-  • Sem avisos do Windows
-
-
-================================================================================
-  ⚠️ IMPORTANTE SOBRE ANTIVÍRUS
-================================================================================
-
-MESMO COM CERTIFICADO DIGITAL, alguns antivírus podem bloquear seu EXE!
-
-Por quê?
-  • EXE novo (sem "reputação")
-  • PyInstaller é usado por malware também
-  • Falso positivo é COMUM
-
-SOLUÇÃO:
-  1. Peça aos usuários para adicionar EXCEÇÃO no antivírus
-  2. Disponibilize o CÓDIGO-FONTE no GitHub (prova que é seguro)
-  3. Com o tempo, o EXE ganha "reputação" e para de ser bloqueado
-
-
-================================================================================
-  📦 RESUMO - MÉTODO RECOMENDADO (GRÁTIS)
-================================================================================
-
-1. ✅ Edite "version_info.txt" com suas informações
-2. ✅ Execute "compilar_para_exe.bat"
-3. ✅ Seu EXE terá sua assinatura nas propriedades!
-
-RESULTADO:
-  Ao clicar com botão direito > Propriedades > Detalhes:
-  
-  Nome do arquivo:        OrganizadorCapturas.exe
-  Descrição do arquivo:   Organizador Automático de Capturas de Tela
-  Versão do arquivo:      1.0.1.0
-  Nome do produto:        Organizador de Capturas de Tela
-  Versão do produto:      1.0.1.0
-  Direitos autorais:      © 2026 SEU NOME. Licença MIT.
-  Empresa:                SEU NOME ✅
-
-
-É simples, grátis e profissional! 🎉
-
-
-================================================================================
-  💡 DICA EXTRA - ÍCONE PERSONALIZADO
-================================================================================
-
-Quer adicionar um ícone personalizado ao EXE?
-
-1. Crie ou baixe um arquivo .ico (256x256 pixels)
-2. Salve como "icone.ico" na pasta do projeto
-3. Edite "compilar_para_exe.bat" e adicione:
-   
-   --icon "icone.ico" ^
-
-4. Compile novamente!
-
-
-Sites para criar ícones:
-  • https://www.icoconverter.com/
-  • https://convertio.co/png-ico/
-  • https://favicon.io/
-
-
-================================================================================
+ASSINATURA DIGITAL (OPCIONAL, PARA QUEM FOR DISTRIBUIR)
+================================================================
+
+Assinar remove o aviso do SmartScreen e evita bloqueios corporativos. Não é
+obrigatório: sem assinatura o programa funciona normalmente, só mostra o
+aviso "O Windows protegeu o seu PC" na primeira execução.
+
+TIPOS DE CERTIFICADO
+--------------------
+Certificado OV (organização validada)
+    ~US$ 100-300/ano. Ainda passa por reputação: o SmartScreen pode avisar
+    até o arquivo acumular downloads.
+
+Certificado EV (validação estendida)
+    ~US$ 300-600/ano, com token físico ou HSM. Dá confiança imediata no
+    SmartScreen, sem período de carência. É o que empresas usam.
+
+Alternativa gratuita
+    Não existe certificado público gratuito aceito pelo Windows. O
+    SignPath.io oferece assinatura gratuita para projetos open source
+    aprovados — vale tentar se o projeto crescer.
+
+ASSINAR O INSTALADOR (Signtool)
+-------------------------------
+O signtool vem no Windows SDK. Exemplo:
+
+    signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 ^
+        /f meu-certificado.pfx /p SENHA ^
+        "Output\OrganizadorCapturas-2.0.2-Setup.exe"
+
+Parâmetros:
+    /fd SHA256              algoritmo do arquivo
+    /tr ... /td SHA256      timestamp (mantém a assinatura válida após o
+                            certificado expirar)
+    /f /p                   arquivo .pfx e senha (ou use /a com o
+                            certificado já instalado no repositório)
+
+Com token EV, troque /f /p por /sha1 <impressão digital> ou use o
+fornecedor (ex.: SafeNet) para o certificado ficar disponível.
+
+VERIFICAR A ASSINATURA
+----------------------
+    signtool verify /pa /v "Output\OrganizadorCapturas-2.0.2-Setup.exe"
+
+Ou, no Explorador: botão direito > Propriedades > Assinaturas Digitais.
+
+ASSINAR TAMBÉM O EXE
+--------------------
+O instalador assina o Setup, mas o EXE interno pode ficar sem assinatura.
+Para assinar os dois, rode o signtool no EXE antes de compilar o instalador:
+
+    signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 ^
+        /f meu-certificado.pfx /p SENHA ^
+        "dist\OrganizadorCapturas\OrganizadorCapturas.exe"
+
+Ou adicione SignTool=... na seção [Setup] do scripts/installer.iss.
+
+CUSTO x BENEFÍCIO
+-----------------
+- Projeto pessoal / poucos usuários: pode ficar sem assinatura
+- Distribuição ampla: certificado OV resolve a maior parte dos casos
+- Uso corporativo: EV, porque políticas de empresa bloqueiam não assinados

@@ -61,10 +61,8 @@ test_*.py
 !tests/
 
 # PyInstaller
-*.spec
 build/
 dist/
-dist-nuitka/
 
 # Inno Setup
 Output/
@@ -76,3 +74,9 @@ Output/
 
 # Configuracao de build do PyInstaller (versionar)
 !OrganizadorCapturas.spec
+
+# Artefatos de teste locais (nao versionar)
+teste_*.py
+teste_*/
+compilar_debug_*.bat
+compilar_noconsole.bat

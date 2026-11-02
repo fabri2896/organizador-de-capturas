@@ -1,84 +1,41 @@
-╔══════════════════════════════════════════════════════════════╗
-║     ORGANIZADOR AUTOMÁTICO DE CAPTURAS DE TELA              ║
-╚══════════════════════════════════════════════════════════════╝
+ORGANIZADOR DE CAPTURAS DE TELA — v2.0.2
+================================================================
 
-📋 O QUE FAZ:
-   • Monitora automaticamente a pasta onde está instalado
-   • Organiza capturas de tela em pastas por Ano/Mês/Dia
-   • Fica minimizado na área de notificação
-   • Mostra ícone verde quando ativo
-   • Mostra ícone amarelo quando pausado
+O que ele faz
+-------------
+Fica na bandeja do sistema monitorando uma pasta. Toda captura que aparece
+lá é movida para uma estrutura por data:
 
-📁 ORGANIZAÇÃO:
-   Suas capturas serão organizadas assim:
-   
-   2026/
-   ├── 01-Janeiro/
-   │   ├── 15/
-   │   │   └── capturas do dia 15 de janeiro
-   ├── 02-Fevereiro/
-   │   ├── 24/
-   │   │   └── capturas do dia 24 de fevereiro
-   │   └── 25/
-   │       └── capturas do dia 25 de fevereiro
+    pasta-monitorada\
+    └── 2026\
+        └── 11-Novembro\
+            └── 02\
+                ├── captura_1.png
+                └── captura_2.png
 
-🚀 COMO USAR:
+Também detecta duplicatas por hash e organiza pastas legadas fora do padrão.
 
-   OPÇÃO 1: Iniciar Automaticamente (Recomendado)
-   ───────────────────────────────────────────────
-   1. Duplo clique em: iniciar_organizador.sh
-      OU execute: ./iniciar_organizador.sh
-   
-   2. O aplicativo inicia EM SEGUNDO PLANO (sem janela!)
-   
-   3. Procure o ícone na área de notificação
-   
-   4. Clique com botão direito no ícone:
-      • Status - Ver quantos arquivos foram organizados
-      • Pausar - Pausa temporariamente
-      • Retomar - Volta a organizar
-      • Sair - Fecha o aplicativo
+Documentos
+----------
+COMO-USAR.txt             Instalação e uso no dia a dia  (comece por aqui)
+INSTRUCOES-WINDOWS.txt    Requisitos, instalar, atualizar, desinstalar
+GERENCIAR-AUTO-START.txt  Ligar/desligar o início automático com o Windows
+ANTIVIRUS-BLOQUEOU.txt    Aviso do Windows/SmartScreen — não é vírus
+COMO-ASSINAR-EXE.txt      Assinatura digital (para quem for distribuir)
 
-   OPÇÃO 2: Controle Manual
-   ─────────────────────────
-   ./controle.sh start    # Inicia em background
-   ./controle.sh stop     # Para o aplicativo
-   ./controle.sh restart  # Reinicia
-   ./controle.sh status   # Verifica se está rodando
-   ./controle.sh log      # Vê o log em tempo real
+Links
+-----
+Código e downloads: https://github.com/fabri2896/organizador-capturas-github
+Problemas/sugestões: https://github.com/fabri2896/organizador-capturas-github/issues
 
-   OPÇÃO 3: Organizar Manualmente (Uma vez)
-   ─────────────────────────────────────────
-   python3 organizar_capturas.py
+Onde ficam os dados
+-------------------
+%APPDATA%\OrganizadorCapturas\
 
-⚙️ FUNCIONAMENTO:
-   • Roda COMPLETAMENTE EM SEGUNDO PLANO (não abre terminal!)
-   • Ícone na área de notificação mostra que está ativo
-   • Detecta automaticamente novos arquivos
-   • Organiza imagens: .png, .jpg, .jpeg, .gif, .bmp, .webp
-   • Usa a data do nome do arquivo (formato: YYYY-MM-DD)
-   • Se não encontrar data no nome, usa a data de modificação
-   • Evita duplicatas automaticamente
-   • Grava log em: organizador.log
+    config.json       pasta monitorada
+    organizador.log   log de operações (rotativo: 5 MB x 3)
+    hash_cache.json   cache de duplicatas
 
-💡 DICAS:
-   • Salve suas capturas nesta pasta
-   • Elas serão organizadas automaticamente
-   • Terminal NÃO fica aberto - roda em background!
-   • Você pode pausar/retomar pelo menu do ícone
-   • O aplicativo conta quantos arquivos organizou
-   • Veja o que está acontecendo: ./controle.sh log
-
-🔧 REQUISITOS:
-   • Python 3.6 ou superior
-   • Bibliotecas: watchdog, pystray, pillow
-   • Sistema operacional com interface gráfica
-
-❓ PROBLEMAS?
-   • Se o ícone não aparecer, verifique se seu sistema tem suporte gráfico
-   • Use a OPÇÃO 3 para organizar manualmente
-   • Certifique-se de que as bibliotecas estão instaladas
-
-═══════════════════════════════════════════════════════════════
-Criado para organizar suas capturas automaticamente! 📸
-═══════════════════════════════════════════════════════════════
+Ficam fora da pasta de instalação de propósito, para funcionar mesmo quando
+o programa é instalado em Program Files. Configurações antigas (salvas ao
+lado do executável) são migradas automaticamente na primeira execução.

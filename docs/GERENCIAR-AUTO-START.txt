@@ -1,188 +1,57 @@
-================================================================================
-  🚀 GERENCIAR AUTO-START - GUIA COMPLETO
-================================================================================
+GERENCIAR O INÍCIO AUTOMÁTICO COM O WINDOWS
+================================================================
 
-Este guia mostra como:
-  ✅ Verificar onde o auto-start está configurado
-  ✅ Remover configurações antigas
-  ✅ Configurar apenas o EXE para iniciar
+O auto-start fica em:
 
+    HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+    Valor: "OrganizadorCapturas"
+    Dados: "C:\...\OrganizadorCapturas.exe"
 
-================================================================================
-  🔍 PASSO 1 - VERIFICAR O QUE ESTÁ CONFIGURADO
-================================================================================
+É o mesmo local que o próprio programa usa, então o menu da bandeja mostra
+o estado correto (com "∨" quando está ativo).
 
-Execute: verificar_auto_start.bat
+3 FORMAS DE LIGAR/DESLIGAR
+--------------------------
 
-Isso vai mostrar TODOS os locais onde o Organizador pode estar configurado:
-  • Registry (HKEY_CURRENT_USER\Run)
-  • Pasta Startup (usuário atual)
-  • Pasta Startup (todos os usuários)
-  • Agendador de Tarefas
+1) Durante a instalação
+   Marque ou desmarque "Iniciar o Organizador automaticamente com o Windows".
+   Desmarcar também remove uma entrada que já existisse de instalação anterior.
 
-RESULTADO ESPERADO:
-  ✅ = Encontrado (está configurado para auto-start)
-  ❌ = Não encontrado
+2) Pelo menu da bandeja (mais fácil depois de instalado)
+   Botão direito no ícone > "🚀 Iniciar com Windows"
+   A marcação "∨" indica que está ligado.
 
+3) Manualmente pelo registro
+   Win + R > regedit > navegue até a chave acima
+   - Remover: apague o valor "OrganizadorCapturas"
+   - Adicionar: crie um valor de texto (REG_SZ) com o caminho do EXE entre
+     aspas, por exemplo:
+     "C:\Users\você\AppData\Local\Programs\OrganizadorCapturas\OrganizadorCapturas.exe"
 
-================================================================================
-  🧹 PASSO 2 - LIMPAR TUDO (REMOVER AUTO-START ANTIGO)
-================================================================================
+VERIFICAR SE ESTÁ ATIVO
+-----------------------
+Prompt de comando:
 
-Execute: limpar_auto_start.bat
+    reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v OrganizadorCapturas
 
-Isso vai REMOVER todas as configurações de auto-start antigas, incluindo:
-  • Scripts Python (.py)
-  • Atalhos .bat
-  • Configurações antigas
+Se aparecer o caminho do OrganizadorCapturas.exe, está ligado.
+Se aparecer "não foi possível encontrar", está desligado.
 
-IMPORTANTE: Execute COMO ADMINISTRADOR se der erro!
-  → Botão direito → "Executar como Administrador"
+DESLIGAR DEFINITIVAMENTE AO DESINSTALAR
+---------------------------------------
+O desinstalador remove essa entrada automaticamente. Se quiser garantir,
+rode o comando de remoção:
 
+    reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v OrganizadorCapturas /f
 
-================================================================================
-  ⚙️ PASSO 3 - CONFIGURAR APENAS O EXE
-================================================================================
-
-Após limpar, configure o EXE:
-
-OPÇÃO A - Via Interface do App (RECOMENDADO):
-────────────────────────────────────────────
-1. Execute: OrganizadorCapturas.exe
-2. Clique com BOTÃO DIREITO no ícone da bandeja
-3. Selecione "🚀 Iniciar com Windows"
-4. Pronto! ✅
-
-Se der erro de permissão:
-  → Execute o EXE COMO ADMINISTRADOR
-  → Configure novamente
-
-
-OPÇÃO B - Manual (Registry):
-────────────────────────────
-1. Pressione Win + R
-2. Digite: regedit
-3. Navegue até:
-   HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
-4. Botão direito → Novo → Valor da Cadeia de Caracteres
-5. Nome: OrganizadorCapturas
-6. Valor: "C:\caminho\completo\para\OrganizadorCapturas.exe"
-7. Fechar regedit
-
-
-OPÇÃO C - Manual (Pasta Startup):
-──────────────────────────────────
-1. Pressione Win + R
-2. Digite: shell:startup
-3. Clique com BOTÃO DIREITO → Novo → Atalho
-4. Localização: C:\caminho\completo\para\OrganizadorCapturas.exe
-5. Nome: Organizador de Capturas
-6. Concluir
-
-
-================================================================================
-  ✅ PASSO 4 - TESTAR
-================================================================================
-
-Para testar se funcionou:
-
-1. REINICIE o computador
-2. Aguarde carregar o Windows
-3. Verifique se o ícone 📁 apareceu na bandeja
-4. Se apareceu = ✅ FUNCIONOU!
-
-
-VERIFICAÇÃO RÁPIDA (sem reiniciar):
-────────────────────────────────────
-1. Execute: verificar_auto_start.bat
-2. Deve mostrar ✅ em APENAS 1 local
-3. Esse local deve apontar para o .EXE (não .py ou .bat)
-
-
-================================================================================
-  🎯 RESUMO RÁPIDO
-================================================================================
-
-PASSO A PASSO COMPLETO:
-─────────────────────────
-
-1️⃣ Duplo clique: verificar_auto_start.bat
-   → Veja onde está configurado
-
-2️⃣ Duplo clique: limpar_auto_start.bat (COMO ADMIN)
-   → Remove TUDO
-
-3️⃣ Execute: OrganizadorCapturas.exe (COMO ADMIN)
-   → Botão direito no ícone → "Iniciar com Windows"
-
-4️⃣ Reinicie o PC e teste!
-
-
-================================================================================
-  ⚠️ PROBLEMAS COMUNS
-================================================================================
-
-PROBLEMA: "Acesso negado" ao limpar
-SOLUÇÃO: Execute limpar_auto_start.bat COMO ADMINISTRADOR
-
-
-PROBLEMA: EXE não inicia automaticamente
-SOLUÇÃO: 
-  1. Verifique se antivírus não bloqueou
-  2. Execute EXE como Admin e configure novamente
-  3. Use Opção C (Pasta Startup) - mais confiável
-
-
-PROBLEMA: Dois organizadores iniciam (script + EXE)
-SOLUÇÃO: Execute limpar_auto_start.bat para remover duplicatas
-
-
-PROBLEMA: Script .py ainda inicia
-SOLUÇÃO:
-  1. Execute: verificar_auto_start.bat
-  2. Veja onde está configurado
-  3. Remova manualmente:
-     • Registry: regedit
-     • Startup: Win+R → shell:startup → delete atalho
-
-
-================================================================================
-  📂 LOCAIS IMPORTANTES
-================================================================================
-
-PASTA STARTUP (Usuario Atual):
-  %APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup
-  
-  Ou pressione: Win + R → shell:startup
-
-
-PASTA STARTUP (Todos os Usuarios):
-  %ProgramData%\Microsoft\Windows\Start Menu\Programs\Startup
-  
-  Ou pressione: Win + R → shell:common startup
-
-
-REGISTRY:
-  HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
-  
-  Ou pressione: Win + R → regedit
-
-
-================================================================================
-  💡 DICAS
-================================================================================
-
-✅ RECOMENDADO: Use o método via interface do app (Opção A)
-   → Mais fácil e seguro
-
-✅ Se der erro de permissão: Execute o EXE como Administrador
-   → Configure uma vez como admin, depois não precisa mais
-
-✅ Pasta Startup é mais confiável que Registry
-   → Antivírus bloqueiam menos
-
-✅ Só configure 1 vez!
-   → Não precisa configurar toda vez que executar
-
-
-================================================================================
+OBSERVAÇÕES
+-----------
+- Não precisa de administrador: HKCU é a área do próprio usuário
+- Instalando "para todos os usuários", o auto-start continua sendo por
+  usuário (cada conta liga o seu)
+- Se o valor apontar para um caminho que não existe mais, o Windows ignora
+  silenciosamente — basta reinstalar para corrigir
+- No Gerenciador de Tarefas > Inicializar, o item aparece como
+  "OrganizadorCapturas" e pode ser desativado por lá também
+- Versões antigas gravavam "pythonw ...\organizador_tray.py", que nunca
+  funcionou. A instalação nova sobrescreve com o caminho correto do EXE.

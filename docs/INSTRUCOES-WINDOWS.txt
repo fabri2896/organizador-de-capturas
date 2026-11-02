@@ -1,110 +1,55 @@
-╔══════════════════════════════════════════════════════════════╗
-║   ORGANIZADOR DE CAPTURAS - INSTRUÇÕES PARA WINDOWS         ║
-╚══════════════════════════════════════════════════════════════╝
+INSTRUÇÕES PARA WINDOWS
+================================================================
 
-🪟 COMO USAR NO WINDOWS:
+REQUISITOS
+----------
+- Windows 10 ou 11, 64 bits
+- Nenhuma instalação de Python é necessária (o EXE já traz tudo)
 
-═══════════════════════════════════════════════════════════════
-📌 OPÇÃO 1: INICIAR AUTOMATICAMENTE COM O WINDOWS (Recomendado)
-═══════════════════════════════════════════════════════════════
+INSTALAR
+--------
+1. Baixe OrganizadorCapturas-2.0.2-Setup.exe
+2. Clique com o botão direito > Executar como administrador (opcional)
+3. Escolha o modo:
+   - "Instalar para todos os usuários" — pede admin, instala em Program Files
+   - "Apenas para mim" — sem admin, instala em %LOCALAPPDATA%\Programs
+4. Confirme ou altere a pasta de instalação
+5. Marque as opções desejadas (auto-start e atalho na área de trabalho)
+6. Instalar > Concluir
 
-   1. Duplo clique em: criar_atalho_inicializacao.vbs
-   
-   2. Clique em "Sim" se aparecer aviso de segurança
-   
-   3. Pronto! Agora o organizador inicia automaticamente
-      quando você ligar o computador
-   
-   ⚠️  IMPORTANTE: O Python deve estar instalado!
+O que o instalador faz:
+- copia o programa (OrganizadorCapturas.exe + pasta _internal)
+- cria atalhos no Menu Iniciar
+- grava o auto-start em HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+- registra o desinstalador em Configurações > Aplicativos
 
-═══════════════════════════════════════════════════════════════
-📌 OPÇÃO 2: INICIAR MANUALMENTE
-═══════════════════════════════════════════════════════════════
+ATUALIZAR
+---------
+Baixe o instalador novo e rode por cima. A configuração em
+%APPDATA%\OrganizadorCapturas\config.json é preservada — não pede a pasta
+de novo. Se o programa estiver aberto, feche antes (o instalador também
+consegue fechá-lo automaticamente).
 
-   Duplo clique em: iniciar_organizador.bat
-   
-   → O aplicativo inicia em segundo plano
-   → Procure o ícone na área de notificação
-   → Você pode fechar a janela do prompt
+DESINSTALAR
+-----------
+Configurações > Aplicativos > Organizador de Capturas > Desinstalar
+(ou Menu Iniciar > Organizador de Capturas > Desinstalar)
 
-═══════════════════════════════════════════════════════════════
-📌 REMOVER DA INICIALIZAÇÃO AUTOMÁTICA
-═══════════════════════════════════════════════════════════════
+A desinstalação remove o programa, os atalhos e a entrada de auto-start.
+O config.json do usuário é mantido de propósito — apague manualmente em
+%APPDATA%\OrganizadorCapturas\ se quiser começar do zero.
 
-   1. Pressione: Windows + R
-   2. Digite: shell:startup
-   3. Aperte Enter
-   4. Delete o atalho "Organizador de Capturas"
+PROBLEMAS
+---------
+"O Windows protegeu o seu PC"
+    Veja ANTIVIRUS-BLOQUEOU.txt (é só o aviso de programa não assinado)
 
-═══════════════════════════════════════════════════════════════
-🔧 REQUISITOS DO WINDOWS
-═══════════════════════════════════════════════════════════════
+O programa não abre / nada acontece
+    Abra o log: %APPDATA%\OrganizadorCapturas\organizador.log
 
-   ✅ Python 3.6 ou superior instalado
-      → Baixe em: https://www.python.org/downloads/
-      → ⚠️ IMPORTANTE: Marque "Add Python to PATH" na instalação!
-   
-   ✅ Bibliotecas Python (instaladas automaticamente):
-      • watchdog
-      • pystray
-      • pillow
+Não consigo gravar em Program Files
+    Instale com a opção "Apenas para mim", que não exige administrador
 
-═══════════════════════════════════════════════════════════════
-❓ SOLUÇÃO DE PROBLEMAS
-═══════════════════════════════════════════════════════════════
-
-   🔴 "Python não encontrado"
-      → Instale Python: https://www.python.org/downloads/
-      → Certifique-se de marcar "Add Python to PATH"!
-   
-   🔴 "Módulo não encontrado"
-      → Abra o Prompt de Comando (CMD)
-      → Execute: pip install watchdog pystray pillow
-   
-   🔴 Ícone não aparece na bandeja
-      → Verifique se Python está instalado corretamente
-      → Clique na seta ^ na bandeja para ver ícones ocultos
-      → Reinicie o computador após instalar dependências
-
-═══════════════════════════════════════════════════════════════
-💡 DICAS PARA WINDOWS
-═══════════════════════════════════════════════════════════════
-
-   • Salve suas capturas de tela nesta pasta
-   • Use Win + Shift + S para capturar tela no Windows 10/11
-   • Configure capturas para salvar automaticamente nesta pasta
-   • O aplicativo organiza instantaneamente ao detectar novos arquivos
-
-═══════════════════════════════════════════════════════════════
-🎯 LOCALIZAÇÃO DA PASTA INICIALIZAR
-═══════════════════════════════════════════════════════════════
-
-   C:\Users\[SEU_USUARIO]\AppData\Roaming\Microsoft\Windows\
-   Start Menu\Programs\Startup
-
-   Atalho rápido: Windows + R → shell:startup
-
-═══════════════════════════════════════════════════════════════
-📁 ESTRUTURA DE ORGANIZAÇÃO
-═══════════════════════════════════════════════════════════════
-
-   Suas capturas ficam organizadas assim:
-   
-   2026\
-   ├── 01-Janeiro\
-   │   ├── 15\
-   │   │   └── capturas_do_dia_15.png
-   │   └── 20\
-   ├── 02-Fevereiro\
-   │   ├── 24\
-   │   └── 25\
-   └── ...
-
-═══════════════════════════════════════════════════════════════
-🆘 SUPORTE
-═══════════════════════════════════════════════════════════════
-
-   • Veja o arquivo: LEIA-ME.txt
-   • Verifique os logs: organizador.log (após executar)
-   
-═══════════════════════════════════════════════════════════════
+Pasta monitorada não existe mais
+    O programa avisa no log e não organiza nada até você escolher outra
+    em Configurar Pasta
