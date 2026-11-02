@@ -73,3 +73,6 @@ Output/
 # Arquivos compilados (não versionar binários)
 *.zip
 *.tar.gz
+
+# Configuracao de build do PyInstaller (versionar)
+!OrganizadorCapturas.spec

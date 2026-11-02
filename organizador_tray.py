@@ -73,8 +73,13 @@ class WindowsAutoStart:
             return False, "Sistema operacional não é Windows"
         
         try:
-            # Comando para executar com pythonw (sem janela)
-            comando = f'pythonw "{script_path}"'
+            # Comando do auto-start.
+            # Compilado em EXE: o próprio executável já roda sem console.
+            # Rodando como .py: precisa do pythonw para não abrir janela.
+            if getattr(sys, 'frozen', False):
+                comando = f'"{sys.executable}"'
+            else:
+                comando = f'pythonw "{script_path}"'
             
             key = winreg.OpenKey(
                 winreg.HKEY_CURRENT_USER,
@@ -113,13 +118,40 @@ class WindowsAutoStart:
             return False, f"Erro ao desabilitar auto-start: {e}"
 
 
+def pasta_dados():
+    """
+    Pasta onde o app grava config, log e cache: %APPDATA%\\OrganizadorCapturas.
+
+    Fica fora da pasta de instalação para funcionar mesmo quando o programa
+    é instalado em Program Files, onde um usuário comum não pode escrever.
+    """
+    base = Path(os.environ.get('APPDATA') or Path.home()) / 'OrganizadorCapturas'
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+    except OSError:
+        return Path(__file__).parent  # último recurso: pasta do executável
+    return base
+
+
 class ConfigManager:
     """Gerencia a configuração do aplicativo"""
     
     def __init__(self, config_file="config.json"):
         self.script_dir = Path(__file__).parent
-        self.config_file = self.script_dir / config_file
+        self.dados_dir = pasta_dados()
+        self.config_file = self.dados_dir / config_file
+        self._migrar_config_antiga(config_file)
         self.config = self.load_config()
+    
+    def _migrar_config_antiga(self, config_file):
+        """Traz o config.json de versões antigas (que ficava ao lado do executável)."""
+        antigo = self.script_dir / config_file
+        if self.config_file.exists() or not antigo.exists():
+            return
+        try:
+            shutil.copy2(antigo, self.config_file)
+        except Exception as e:
+            print(f"Não foi possível migrar a configuração antiga: {e}")
     
     def load_config(self):
         """Carrega configuração do arquivo"""
@@ -314,8 +346,9 @@ class OrganizadorCapturas:
         self._hash_cache = {}  # {hash_md5: caminho_arquivo}
         self._cache_carregado = False
         
-        # Configura logging (agora salva no diretório do script)
-        self.log_file = self.script_dir / 'organizador.log'
+        # Configura logging (em %APPDATA%, junto da configuração)
+        self.dados_dir = pasta_dados()
+        self.log_file = self.dados_dir / 'organizador.log'
         
         # Cria logger dedicado (evita conflitos de basicConfig)
         self.logger = logging.getLogger('OrganizadorCapturas')
@@ -388,7 +421,7 @@ class OrganizadorCapturas:
         """Carrega o cache de hashes do disco (arquivo JSON) para evitar releitura."""
         if self._cache_carregado:
             return
-        cache_file = self.script_dir / 'hash_cache.json'
+        cache_file = self.dados_dir / 'hash_cache.json'
         try:
             if cache_file.exists():
                 with open(cache_file, 'r', encoding='utf-8') as f:
@@ -403,7 +436,7 @@ class OrganizadorCapturas:
     
     def _salvar_cache_hashes(self):
         """Salva o cache de hashes no disco."""
-        cache_file = self.script_dir / 'hash_cache.json'
+        cache_file = self.dados_dir / 'hash_cache.json'
         try:
             with open(cache_file, 'w', encoding='utf-8') as f:
                 json.dump(self._hash_cache, f, ensure_ascii=False)
@@ -473,8 +506,16 @@ class OrganizadorCapturas:
         self.logger.warning(f"⚠️  Timeout ao aguardar estabilização de {caminho}")
         return True  # Tenta processar mesmo assim
     
-    def organizar_arquivo(self, caminho_arquivo):
-        """Organiza um arquivo específico"""
+    def organizar_arquivo(self, caminho_arquivo, verificar_estabilidade=True):
+        """
+        Organiza um arquivo específico.
+
+        Args:
+            caminho_arquivo: caminho do arquivo a organizar
+            verificar_estabilidade: espera o arquivo parar de crescer antes de
+                mover. O backfill desliga isso (arquivos antigos já estão
+                prontos), o que deixa a varredura inicial muito mais rápida.
+        """
         if self.pausado:
             return
         
@@ -486,14 +527,16 @@ class OrganizadorCapturas:
         if arquivo.suffix.lower() not in extensoes_imagem:
             return
         
-        # Ignora arquivos que já estão dentro da pasta organizada (mais robusto)
+        # Evita organizar arquivo que já está no destino correto (evita loop com watchdog)
         try:
-            if self.pasta_monitorada in arquivo.parents:
-                # Verifica se está em subpasta (já organizado)
-                if len(arquivo.relative_to(self.pasta_monitorada).parts) > 1:
+            rel = arquivo.relative_to(self.pasta_monitorada)
+            partes = rel.parts
+            # Se já está em estrutura Ano/Mês-Dia/Dia/ com mesmo nome, já está organizado
+            if len(partes) == 3:
+                ano, mes_dia, arquivo_nome = partes
+                if ano.isdigit() and len(ano) == 4 and arquivo_nome == arquivo.name:
                     return
         except (ValueError, OSError):
-            # Se não conseguir verificar, continua processando
             pass
         
         # Tenta extrair data do nome
@@ -521,7 +564,7 @@ class OrganizadorCapturas:
         
         try:
             # Verifica se arquivo está completamente escrito (robusto para arquivos grandes)
-            if not self.esperar_arquivo_estavel(str(arquivo)):
+            if verificar_estabilidade and not self.esperar_arquivo_estavel(str(arquivo)):
                 self.logger.warning(f"⚠️  Arquivo ainda está sendo escrito, pulando: {arquivo.name}")
                 return
             
@@ -594,21 +637,21 @@ class OrganizadorCapturas:
         contador = 0
         extensoes_imagem = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
         
-        # Coleta apenas arquivos diretamente na raiz da pasta monitorada
-        # (ignora subpastas já organizadas)
-        arquivos_raiz = [
-            f for f in self.pasta_monitorada.iterdir()
+        # Varre a pasta monitorada (incluindo subpastas) para backfill
+        arquivos_encontrados = [
+            f for f in self.pasta_monitorada.rglob('*')
             if f.is_file() and f.suffix.lower() in extensoes_imagem
         ]
         
-        self.logger.info(f"🔍 Backfill: {len(arquivos_raiz)} arquivo(s) encontrado(s) na raiz para organizar")
+        self.logger.info(f"🔍 Backfill: {len(arquivos_encontrados)} arquivo(s) encontrado(s) para organizar")
         
-        for arquivo in arquivos_raiz:
+        for arquivo in arquivos_encontrados:
             if self.pausado:
                 break
             try:
-                # Chama organizar_arquivo para cada um (reutiliza toda a lógica)
-                self.organizar_arquivo(str(arquivo))
+                # Arquivos já existentes estão prontos: não precisa esperar
+                # estabilização (economiza ~0.6s por arquivo na 1ª varredura)
+                self.organizar_arquivo(str(arquivo), verificar_estabilidade=False)
                 contador += 1
             except Exception as e:
                 self.logger.error(f"❌ Erro no backfill de '{arquivo.name}': {e}")
@@ -674,6 +717,77 @@ class ManipuladorArquivos(FileSystemEventHandler):
                 self.organizador.organizar_arquivo(event.dest_path)
 
 
+def desenhar_icone(tamanho=64, cor="green"):
+    """
+    Desenha o ícone do app: uma pasta com uma foto dentro.
+    Representa o propósito — capturas de tela organizadas em pastas.
+
+    A arte é sempre desenhada em 256x256 e reduzida com LANCZOS para o
+    tamanho pedido, então as bordas ficam suaves em qualquer DPI.
+    Usado tanto na bandeja (64) quanto na geração do app.ico (16..256).
+    """
+    escala = 4
+    lado = 64 * escala
+    img = Image.new('RGBA', (lado, lado), (255, 255, 255, 0))
+    draw = ImageDraw.Draw(img)
+
+    # Cor por estado: verde = ativo, amarelo = pausado, vermelho = parado
+    paletas = {
+        "green": ("#43A047", "#14401A"),
+        "yellow": ("#F9A825", "#4A2C00"),
+        "red": ("#E53935", "#3E0B0B"),
+    }
+    cor_pasta, cor_borda = paletas.get(cor, paletas["green"])
+
+    def px(*valores):
+        """Converte coordenadas do desenho (base 64) para a escala interna."""
+        return [v * escala for v in valores]
+
+    borda = escala  # equivale a ~1px no tamanho final
+
+    # Aba da pasta
+    draw.rounded_rectangle(
+        px(12, 9, 34, 23),
+        radius=4 * escala,
+        fill=cor_pasta,
+        outline=cor_borda,
+        width=borda
+    )
+
+    # Corpo da pasta
+    draw.rounded_rectangle(
+        px(6, 16, 58, 56),
+        radius=6 * escala,
+        fill=cor_pasta,
+        outline=cor_borda,
+        width=borda
+    )
+
+    # Foto (a captura) dentro da pasta
+    draw.rounded_rectangle(
+        px(14, 24, 50, 48),
+        radius=3 * escala,
+        fill=(255, 255, 255, 255)
+    )
+
+    # Sol (âmbar contrasta com a montanha e sobrevive à redução p/ 16px)
+    draw.ellipse(px(37, 26, 45, 34), fill="#FFB300")
+
+    # Montanha (elemento clássico de ícone de imagem)
+    draw.polygon(
+        [tuple(px(15, 44)), tuple(px(27, 32)), tuple(px(39, 44))],
+        fill=cor_borda
+    )
+
+    # Morro em primeiro plano, dá profundidade
+    draw.polygon(
+        [tuple(px(30, 44)), tuple(px(38, 37)), tuple(px(46, 44))],
+        fill=cor_pasta
+    )
+
+    return img.resize((tamanho, tamanho), Image.LANCZOS)
+
+
 class AplicativoTray:
     """Aplicativo com ícone na bandeja do sistema"""
     
@@ -685,35 +799,8 @@ class AplicativoTray:
         self.log_window = LogWindow(self.organizador)
         
     def criar_icone(self, cor="green"):
-        """Cria um ícone com emoji de pasta 📁"""
-        # Cria uma imagem 64x64 com transparência
-        img = Image.new('RGBA', (64, 64), color=(255, 255, 255, 0))
-        draw = ImageDraw.Draw(img)
-        
-        # Cores dinâmicas
-        cores = {
-            "green": "#4CAF50",
-            "yellow": "#FFC107",
-            "red": "#F44336"
-        }
-        cor_atual = cores.get(cor, "#4CAF50")
-        
-        # Desenha a pasta (corpo principal)
-        draw.rounded_rectangle([10, 20, 54, 54], radius=3, fill=cor_atual)
-        
-        # Desenha a aba da pasta
-        draw.rounded_rectangle([10, 16, 35, 24], radius=2, fill=cor_atual)
-        
-        # Adiciona um brilho/destaque
-        draw.rounded_rectangle([14, 24, 50, 30], radius=2, fill=(255, 255, 255, 80))
-        
-        # Desenha linhas simulando documentos dentro da pasta
-        linha_cor = (255, 255, 255, 150)
-        draw.line([20, 36, 44, 36], fill=linha_cor, width=2)
-        draw.line([20, 42, 44, 42], fill=linha_cor, width=2)
-        draw.line([20, 48, 38, 48], fill=linha_cor, width=2)
-        
-        return img
+        """Cria o ícone 64x64 da bandeja (delegado a desenhar_icone)."""
+        return desenhar_icone(64, cor)
     
     def iniciar_monitoramento(self):
         """Inicia o monitoramento em thread separada"""
@@ -722,7 +809,7 @@ class AplicativoTray:
         self.organizador.observer.schedule(
             event_handler,
             str(self.organizador.pasta_monitorada),
-            recursive=False
+            recursive=True
         )
         self.organizador.observer.start()
         self.organizador.logger.info(f"👁️  Monitorando: {self.organizador.pasta_monitorada}")
@@ -927,14 +1014,29 @@ class AplicativoTray:
         if self.icon:
             self.icon.icon = self.criar_icone(cor)
     
-    def executar(self):
-        """Executa o aplicativo"""
-        # Backfill: organiza arquivos que já estão na pasta (usuários que já têm capturas soltas)
+    def _backfill_inicial(self):
+        """
+        Organiza as capturas que já estavam na pasta, em segundo plano.
+
+        Roda numa thread separada para o ícone da bandeja aparecer na hora:
+        com centenas de arquivos, o backfill pode levar minutos.
+        """
         try:
+            # Avisa que o app subiu (o Windows às vezes esconde o ícone novo)
+            try:
+                self.icon.notify(
+                    'Organizador ativo. As capturas que já estavam na pasta '
+                    'estão sendo organizadas em segundo plano.',
+                    'Organizador de Capturas'
+                )
+            except Exception:
+                pass
             self.organizador.organizar_existentes()
         except Exception as e:
             self.organizador.logger.error(f"❌ Erro no backfill inicial: {e}")
-        
+
+    def executar(self):
+        """Executa o aplicativo"""
         # Inicia o monitoramento
         self.iniciar_monitoramento()
         
@@ -991,6 +1093,9 @@ class AplicativoTray:
         self.organizador.logger.info("💡 O aplicativo está rodando na bandeja do sistema")
         self.organizador.logger.info("💡 Clique com botão direito no ícone para ver opções")
         self.organizador.logger.info("="*60)
+        
+        # Backfill em segundo plano (não bloqueia a criação do ícone)
+        threading.Thread(target=self._backfill_inicial, daemon=True).start()
         
         # Roda o aplicativo
         self.icon.run()

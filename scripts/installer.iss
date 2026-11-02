@@ -1,90 +1,150 @@
-; Script do Inno Setup para Organizador de Capturas v1.0.1
-; Cria um instalador profissional para Windows
-; Download Inno Setup: https://jrsoftware.org/isinfo.php
+; ============================================================================
+;  Instalador do Organizador de Capturas — v2.0.1
+;  Inno Setup 6.x  (https://jrsoftware.org/isinfo.php)
+;
+;  Gera: Output\OrganizadorCapturas-2.0.1-Setup.exe
+;  Compilar com: ISCC.exe scripts\installer.iss
+; ============================================================================
 
 [Setup]
-; Informações do Aplicativo
+; --- Identidade (AppId fixo: permite atualizar por cima sem duplicar) ---
+AppId={{A7F3D2C1-5E4B-4C9A-9B21-7D6E8F0A1B2C}
 AppName=Organizador de Capturas
-AppVersion=1.0.1
+AppVersion=2.0.1
+AppVerName=Organizador de Capturas 2.0.1
 AppPublisher=fabri2896
-AppPublisherURL=https://github.com/fabri2896/organizador-capturas
-AppSupportURL=https://github.com/fabri2896/organizador-capturas/issues
-AppUpdatesURL=https://github.com/fabri2896/organizador-capturas/releases
+AppPublisherURL=https://github.com/fabri2896/organizador-capturas-github
+AppSupportURL=https://github.com/fabri2896/organizador-capturas-github/issues
+AppUpdatesURL=https://github.com/fabri2896/organizador-capturas-github/releases
+AppCopyright=Copyright (C) 2026 fabri2896 - Licenca MIT
+
+; --- Onde instalar (página de pasta sempre visível: usuário pode mudar) ---
 DefaultDirName={autopf}\OrganizadorCapturas
+DisableDirPage=no
 DefaultGroupName=Organizador de Capturas
 AllowNoIcons=yes
-LicenseFile=LICENSE
-OutputDir=.
-OutputBaseFilename=OrganizadorCapturas-v1.0.1-Setup
-SetupIconFile=
-Compression=lzma
-SolidCompression=yes
-WizardStyle=modern
-PrivilegesRequired=lowest
 
-; Informações de versão
-VersionInfoVersion=1.0.1.0
+; --- Janela/aparência ---
+WizardStyle=modern
+WizardImageFile=wizard.png
+WizardSmallImageFile=wizsmall.png
+SetupIconFile=..\app.ico
+UninstallDisplayIcon={app}\OrganizadorCapturas.exe
+UninstallDisplayName=Organizador de Capturas
+
+; --- Permissões: usuário escolhe "todos os usuários" (admin) ou "só eu" ---
+PrivilegesRequired=lowest
+PrivilegesRequiredOverridesAllowed=dialog
+
+; --- Saída ---
+OutputDir=..\Output
+OutputBaseFilename=OrganizadorCapturas-2.0.1-Setup
+LicenseFile=..\LICENSE
+Compression=lzma2/max
+SolidCompression=yes
+
+; --- Metadados do arquivo de instalação ---
+VersionInfoVersion=2.0.1.0
 VersionInfoCompany=fabri2896
 VersionInfoDescription=Instalador do Organizador de Capturas de Tela
 VersionInfoCopyright=Copyright (C) 2026 fabri2896
+VersionInfoProductName=Organizador de Capturas
+
+; Fecha o app antes de atualizar e reabre depois
+CloseApplications=yes
+RestartApplications=no
 
 [Languages]
 Name: "brazilianportuguese"; MessagesFile: "compiler:Languages\BrazilianPortuguese.isl"
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
-Name: "autostart"; Description: "Iniciar automaticamente com o Windows"; GroupDescription: "Opções de inicialização:"
+; --- Opção 1: atalho na área de trabalho ---
+Name: "desktopicon"; Description: "Criar atalho na &Área de Trabalho"; GroupDescription: "Atalhos:"; Flags: unchecked
+
+; --- Opção 2: iniciar junto com o Windows ---
+Name: "autostart"; Description: "Iniciar o Organizador automaticamente com o &Windows"; GroupDescription: "Inicialização:"; Flags: checkedonce
 
 [Files]
-; Copia TODA a pasta dist\OrganizadorCapturas (EXE + DLLs)
-Source: "dist\OrganizadorCapturas\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-; Copia documentação
-Source: "README.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "LICENSE"; DestDir: "{app}"; Flags: ignoreversion
-Source: "LEIA-ME.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "INSTRUCOES-WINDOWS.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "COMO-USAR-EXE.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "ANTIVIRUS-BLOQUEOU.txt"; DestDir: "{app}"; Flags: ignoreversion
-Source: "GERENCIAR-AUTO-START.txt"; DestDir: "{app}"; Flags: ignoreversion
+; Aplicativo (EXE + dependências do PyInstaller)
+Source: "..\dist\OrganizadorCapturas\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Documentação
+Source: "..\README.md"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\LICENSE"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-; Ícone no Menu Iniciar
-Name: "{group}\Organizador de Capturas"; Filename: "{app}\OrganizadorCapturas.exe"
-Name: "{group}\Leia-me"; Filename: "{app}\LEIA-ME.txt"
-Name: "{group}\Como Usar"; Filename: "{app}\COMO-USAR-EXE.txt"
-Name: "{group}\Desinstalar"; Filename: "{uninstallexe}"
-
-; Ícone na Área de Trabalho (se selecionado)
+; Menu Iniciar
+Name: "{group}\Organizador de Capturas"; Filename: "{app}\OrganizadorCapturas.exe"; Comment: "Organiza suas capturas de tela por data"
+Name: "{group}\Desinstalar Organizador de Capturas"; Filename: "{uninstallexe}"
+; Área de trabalho (só se marcado)
 Name: "{autodesktop}\Organizador de Capturas"; Filename: "{app}\OrganizadorCapturas.exe"; Tasks: desktopicon
 
-; Auto-start (se selecionado)
-Name: "{userstartup}\Organizador de Capturas"; Filename: "{app}\OrganizadorCapturas.exe"; Tasks: autostart
+; (O auto-start em HKCU\...\Run é gravado na seção [Code], para que uma
+;  falha de registro — raro, mas possível em máquinas travadas — nunca
+;  aborte a instalação inteira.)
 
 [Run]
-; Executar após instalação (pergunta ao usuário)
-Filename: "{app}\OrganizadorCapturas.exe"; Description: "{cm:LaunchProgram,Organizador de Capturas}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\OrganizadorCapturas.exe"; Description: "Abrir o Organizador de Capturas agora"; \
+    Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
-; Remove arquivos de configuração ao desinstalar
+; Dados regeneráveis do usuário (config.json é mantido de propósito)
+Type: files; Name: "{userappdata}\OrganizadorCapturas\hash_cache.json"
+Type: files; Name: "{userappdata}\OrganizadorCapturas\organizador.log"
+Type: files; Name: "{userappdata}\OrganizadorCapturas\organizador.log.*"
+; Config antiga de versões que salvavam ao lado do executável
 Type: files; Name: "{app}\config.json"
-Type: files; Name: "{app}\organizador.log"
 
 [Code]
-// Mensagem personalizada na primeira tela
-function InitializeSetup(): Boolean;
-begin
-  Result := True;
-end;
+const
+  RUN_KEY = 'Software\Microsoft\Windows\CurrentVersion\Run';
+  RUN_VAL = 'OrganizadorCapturas';
 
-// Mensagem ao finalizar instalação
+{ Grava (ou remove) o auto-start no mesmo local que o próprio aplicativo usa,
+  HKCU\Software\Microsoft\Windows\CurrentVersion\Run. Assim o menu
+  "Iniciar com Windows" da bandeja mostra o estado correto.
+  Em caso de falha, apenas avisa — não aborta a instalação. }
 procedure CurStepChanged(CurStep: TSetupStep);
+var
+  alvo: String;
+  ok: Boolean;
 begin
   if CurStep = ssPostInstall then
   begin
-    MsgBox('Instalação concluída com sucesso!' + #13#10 + #13#10 +
-           'O Organizador de Capturas foi instalado.' + #13#10 + #13#10 +
-           'Na primeira execução, você será solicitado a selecionar a pasta para monitorar.' + #13#10 + #13#10 +
-           'Clique com botão direito no ícone 📁 da bandeja para acessar as opções.',
-           mbInformation, MB_OK);
+    if WizardIsTaskSelected('autostart') then
+    begin
+      alvo := '"' + ExpandConstant('{app}\OrganizadorCapturas.exe') + '"';
+      ok := RegWriteStringValue(HKEY_CURRENT_USER, RUN_KEY, RUN_VAL, alvo);
+      if not ok then
+        MsgBox('O programa foi instalado, mas não foi possível registrar' + #13#10 +
+               'o início automático com o Windows (acesso ao registro negado).' + #13#10 + #13#10 +
+               'Você pode ativar depois pelo menu da bandeja:' + #13#10 +
+               '"Iniciar com Windows".', mbInformation, MB_OK);
+    end
+    else
+    begin
+      { Usuário desmarcou: remove entrada antiga, se existir }
+      RegDeleteValue(HKEY_CURRENT_USER, RUN_KEY, RUN_VAL);
+    end;
+  end;
+end;
+
+{ Remove a entrada de auto-start ao desinstalar }
+procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
+begin
+  if CurUninstallStep = usPostUninstall then
+    RegDeleteValue(HKEY_CURRENT_USER, RUN_KEY, RUN_VAL);
+end;
+
+{ Aviso amigável sobre a primeira execução }
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if CurPageID = wpFinished then
+  begin
+    WizardForm.FinishedLabel.Caption :=
+      'O Organizador de Capturas foi instalado.' + #13#10 + #13#10 +
+      'Na primeira execução, escolha a pasta que deseja monitorar' + #13#10 +
+      '(por exemplo, a pasta onde o ShareX salva suas capturas).' + #13#10 + #13#10 +
+      'Depois disso, clique com o botão direito no ícone da bandeja' + #13#10 +
+      'para pausar, trocar a pasta ou sair.';
   end;
 end;

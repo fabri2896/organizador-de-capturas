@@ -5,8 +5,8 @@
 ![Python](https://img.shields.io/badge/Python-3.6+-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-brightgreen.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Release](https://img.shields.io/github/v/release/fabri2896/organizador-capturas?label=Release)
-![Downloads](https://img.shields.io/github/downloads/fabri2896/organizador-capturas/total?label=Downloads)
+![Release](https://img.shields.io/github/v/release/fabri2896/organizador-capturas-github?label=Release)
+![Downloads](https://img.shields.io/github/downloads/fabri2896/organizador-capturas-github/total?label=Downloads)
 
 **Organize suas capturas de tela automaticamente por data, detecte duplicatas e mantenha tudo limpo!**
 
@@ -117,27 +117,41 @@ pip install watchdog pystray pillow
 
 ## 💾 Instalação
 
-### Opção 1: Executável Windows (Recomendado) 🎯
+### Opção 1: Instalador Windows (Recomendado) 🎯
 
-**Sem necessidade de instalar Python!**
+**Sem necessidade de instalar Python.**
 
-1. **Baixe o release mais recente:**
-   - Acesse: [Releases](https://github.com/fabri2896/organizador-capturas/releases/latest)
-   - Baixe: `OrganizadorCapturas-v1.0.1-Windows.zip`
+1. **Baixe o instalador mais recente:**
+   - Acesse: [Releases](https://github.com/fabri2896/organizador-capturas-github/releases/latest)
+   - Baixe: `OrganizadorCapturas-2.0.1-Setup.exe`
 
-2. **Extraia e execute:**
-   - Extraia o ZIP em qualquer pasta
-   - Execute `Organizador_Tray.exe`
-   - Pronto! ✅
+2. **Execute e siga o assistente:**
+   - Escolha **"Instalar para todos os usuários"** (pede admin) ou **"Apenas para mim"** (sem admin)
+   - Confirme ou **altere a pasta de instalação**
+   - Marque **"Iniciar o Organizador automaticamente com o Windows"** se quiser que ele abra junto com o sistema
+   - Opcional: atalho na Área de Trabalho
 
-### Opção 2: Código Fonte (Python)
+O instalador cria atalhos no Menu Iniciar, registra a entrada de auto-start no
+`HKCU\Software\Microsoft\Windows\CurrentVersion\Run` e inclui desinstalador
+(**Configurações → Aplicativos → Organizador de Capturas**).
+
+### Opção 2: Pacote Portátil (ZIP)
+
+Para quem não quer instalar nada:
+
+1. Baixe `OrganizadorCapturas-Windows.zip` na página de Releases
+2. Extraia em qualquer pasta
+3. Execute `OrganizadorCapturas.exe`
+4. Pronto! ✅
+
+### Opção 3: Código Fonte (Python)
 
 **Para desenvolvedores ou usuários Linux:**
 
 1. **Clone o repositório:**
    ```bash
-   git clone https://github.com/fabri2896/organizador-capturas.git
-   cd organizador-capturas
+   git clone https://github.com/fabri2896/organizador-capturas-github.git
+   cd organizador-capturas-github
    ```
 
 2. **Instale as dependências:**
@@ -225,7 +239,15 @@ Na primeira vez, o organizador perguntará qual pasta monitorar:
 
 ### Arquivo de Configuração
 
-O arquivo `config.json` é criado automaticamente:
+O arquivo `config.json` é criado automaticamente em:
+
+```
+%APPDATA%\OrganizadorCapturas\config.json
+```
+
+Junto dele ficam `organizador.log` (log rotativo) e `hash_cache.json`
+(cache de duplicatas). Ficam fora da pasta de instalação justamente para
+funcionarem quando o app é instalado em `Program Files`.
 
 ```json
 {
@@ -233,7 +255,8 @@ O arquivo `config.json` é criado automaticamente:
 }
 ```
 
-Você pode editá-lo manualmente se preferir.
+Você pode editá-lo manualmente se preferir. Versões antigas que salvavam o
+`config.json` ao lado do executável são migradas automaticamente na primeira execução.
 
 ---
 
@@ -350,7 +373,7 @@ Agora toda captura que você fizer será **automaticamente organizada**! 🎉
 ## 📂 Estrutura do Projeto
 
 ```
-organizador-capturas/
+organizador-capturas-github/
 ├── organizador_tray.py              # Script principal
 ├── iniciar_organizador.bat          # Inicializador Windows
 ├── iniciar_organizador.sh           # Inicializador Linux
@@ -439,8 +462,8 @@ Atualmente não há opção, mas é fácil modificar o código (comentar a seç�
 
 Tem dúvidas? Sugestões? Bugs?
 
-- 🐛 **Issues**: [GitHub Issues](https://github.com/fabri2896/organizador-capturas/issues)
-- 💬 **Discussões**: [GitHub Discussions](https://github.com/fabri2896/organizador-capturas/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/fabri2896/organizador-capturas-github/issues)
+- 💬 **Discussões**: [GitHub Discussions](https://github.com/fabri2896/organizador-capturas-github/discussions)
 
 ---
 
