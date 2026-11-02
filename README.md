@@ -135,16 +135,7 @@ O instalador cria atalhos no Menu Iniciar, registra a entrada de auto-start no
 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` e inclui desinstalador
 (**Configurações → Aplicativos → Organizador de Capturas**).
 
-### Opção 2: Pacote Portátil (ZIP)
-
-Para quem não quer instalar nada:
-
-1. Baixe `OrganizadorCapturas-Windows.zip` na página de Releases
-2. Extraia em qualquer pasta
-3. Execute `OrganizadorCapturas.exe`
-4. Pronto! ✅
-
-### Opção 3: Código Fonte (Python)
+### Opção 2: Código Fonte (Python)
 
 **Para desenvolvedores ou usuários Linux:**
 
