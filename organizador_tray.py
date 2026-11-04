@@ -74,8 +74,6 @@ class WindowsAutoStart:
         
         try:
             # Comando do auto-start.
-            # Compilado em EXE: o próprio executável já roda sem console.
-            # Rodando como .py: precisa do pythonw para não abrir janela.
             if getattr(sys, 'frozen', False):
                 comando = f'"{sys.executable}"'
             else:
@@ -124,10 +122,6 @@ _MUTEX_INSTANCIA = None
 def ja_existe_outra_instancia():
     """
     Impede duas cópias do app rodando ao mesmo tempo.
-
-    Sem isso, duas instâncias monitoram a mesma pasta e brigam pelos mesmos
-    arquivos — WinError 5 (acesso negado), 183 (já existe) e 3 (não encontrado).
-    O mutex é liberado pelo Windows quando o processo termina.
     """
     global _MUTEX_INSTANCIA
     if sys.platform != 'win32':
@@ -145,15 +139,14 @@ def ja_existe_outra_instancia():
 def pasta_dados():
     """
     Pasta onde o app grava config, log e cache: %APPDATA%\\OrganizadorCapturas.
-
-    Fica fora da pasta de instalação para funcionar mesmo quando o programa
-    é instalado em Program Files, onde um usuário comum não pode escrever.
     """
     base = Path(os.environ.get('APPDATA') or Path.home()) / 'OrganizadorCapturas'
     try:
         base.mkdir(parents=True, exist_ok=True)
     except OSError:
-        return Path(__file__).parent  # último recurso: pasta do executável
+        # Fallback seguro para o diretório do usuário local
+        base = Path.home() / 'OrganizadorCapturasLocal'
+        base.mkdir(parents=True, exist_ok=True)
     return base
 
 
@@ -168,7 +161,7 @@ class ConfigManager:
         self.config = self.load_config()
     
     def _migrar_config_antiga(self, config_file):
-        """Traz o config.json de versões antigas (que ficava ao lado do executável)."""
+        """Traz o config.json de versões antigas."""
         antigo = self.script_dir / config_file
         if self.config_file.exists() or not antigo.exists():
             return
@@ -189,10 +182,16 @@ class ConfigManager:
         return {}
     
     def save_config(self):
-        """Salva configuração no arquivo"""
+        """Salva configuração de forma segura contra interrupções de energia"""
         try:
-            with open(self.config_file, 'w', encoding='utf-8') as f:
+            temp_file = self.config_file.with_suffix('.tmp')
+            with open(temp_file, 'w', encoding='utf-8') as f:
                 json.dump(self.config, f, indent=4, ensure_ascii=False)
+                f.flush()
+                os.fsync(f.fileno()) # Força a gravação física no disco
+            
+            # Sobrescreve o arquivo original de forma atômica
+            os.replace(temp_file, self.config_file)
         except Exception as e:
             print(f"Erro ao salvar configuração: {e}")
     
@@ -229,7 +228,7 @@ class LogWindow:
         self.max_lines = 500
     
     def create_window(self):
-        """Cria a janela de logs (usa Toplevel para não criar múltiplas instâncias Tk)"""
+        """Cria a janela de logs"""
         if self.window is not None:
             try:
                 self.window.lift()
@@ -238,16 +237,14 @@ class LogWindow:
             except:
                 pass
         
-        # Cria uma janela principal oculta se não existir (necessária para Toplevel)
         if not hasattr(self, '_root') or self._root is None:
             self._root = tk.Tk()
-            self._root.withdraw()  # Esconde a janela principal
+            self._root.withdraw()
         
         self.window = tk.Toplevel(self._root)
         self.window.title("Organizador de Capturas - Logs e Status")
         self.window.geometry("700x500")
         
-        # Frame de status
         status_frame = ttk.LabelFrame(self.window, text="Status", padding=10)
         status_frame.pack(fill=tk.X, padx=10, pady=5)
         
@@ -261,11 +258,9 @@ Log File: {self.organizador.log_file}
         status_label = ttk.Label(status_frame, text=status_info, justify=tk.LEFT)
         status_label.pack()
         
-        # Frame de logs
         log_frame = ttk.LabelFrame(self.window, text="Logs em Tempo Real", padding=10)
         log_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=5)
         
-        # Área de texto com scroll
         self.text_area = scrolledtext.ScrolledText(
             log_frame,
             wrap=tk.WORD,
@@ -275,10 +270,8 @@ Log File: {self.organizador.log_file}
         )
         self.text_area.pack(fill=tk.BOTH, expand=True)
         
-        # Carrega últimas linhas do log
         self.load_recent_logs()
         
-        # Frame de botões
         button_frame = ttk.Frame(self.window)
         button_frame.pack(fill=tk.X, padx=10, pady=5)
         
@@ -289,7 +282,6 @@ Log File: {self.organizador.log_file}
         
         self.window.protocol("WM_DELETE_WINDOW", self.close_window)
         
-        # Conecta o callback de logs
         self.organizador.log_handler.log_callback = self.append_log
         
         self.window.mainloop()
@@ -300,7 +292,7 @@ Log File: {self.organizador.log_file}
             try:
                 with open(self.organizador.log_file, 'r', encoding='utf-8') as f:
                     lines = f.readlines()
-                    recent_lines = lines[-100:]  # Últimas 100 linhas
+                    recent_lines = lines[-100:]
                     for line in recent_lines:
                         self.text_area.insert(tk.END, line)
                     self.text_area.see(tk.END)
@@ -308,8 +300,11 @@ Log File: {self.organizador.log_file}
                 self.append_log(f"Erro ao carregar logs: {e}\n")
     
     def append_log(self, message):
-        """Adiciona mensagem ao log"""
-        if self.text_area:
+        """Adiciona mensagem ao log de forma segura (Thread-safe)"""
+        if not self.text_area:
+            return
+            
+        def atualizar_gui():
             try:
                 self.text_area.insert(tk.END, message + "\n")
                 self.text_area.see(tk.END)
@@ -318,8 +313,11 @@ Log File: {self.organizador.log_file}
                 lines = int(self.text_area.index('end-1c').split('.')[0])
                 if lines > self.max_lines:
                     self.text_area.delete('1.0', f'{lines - self.max_lines}.0')
-            except:
-                pass
+            except tk.TclError:
+                pass # A janela pode ter sido fechada durante o processo
+                
+        # Delega a atualização visual para a thread principal do Tkinter
+        self.text_area.after(0, atualizar_gui)
     
     def clear_logs(self):
         """Limpa a área de logs"""
@@ -344,7 +342,7 @@ Log File: {self.organizador.log_file}
             messagebox.showerror("Erro", f"Não foi possível abrir a pasta:\n{e}")
     
     def close_window(self):
-        """Fecha a janela de logs (mantém o root oculto para reuso)"""
+        """Fecha a janela de logs"""
         if self.window:
             self.organizador.log_handler.log_callback = None
             self.window.destroy()
@@ -362,38 +360,29 @@ class OrganizadorCapturas:
         self.observer = None
         self.config = config or {}
         
-        # Configurações de comportamento
         self.deletar_duplicatas = self.config.get('deletar_duplicatas', True)
-        self.pasta_duplicatas = self.config.get('pasta_duplicatas')  # caminho ou None
+        self.pasta_duplicatas = self.config.get('pasta_duplicatas')
         
-        # Cache de hashes para detecção rápida de duplicatas (evita reler todos os arquivos)
-        self._hash_cache = {}  # {hash_md5: caminho_arquivo}
+        self._hash_cache = {}
         self._cache_carregado = False
         
-        # Configura logging (em %APPDATA%, junto da configuração)
         self.dados_dir = pasta_dados()
         self.log_file = self.dados_dir / 'organizador.log'
         
-        # Cria logger dedicado (evita conflitos de basicConfig)
         self.logger = logging.getLogger('OrganizadorCapturas')
         self.logger.setLevel(logging.INFO)
         
-        # Remove handlers antigos (caso script seja reiniciado)
         if self.logger.handlers:
             self.logger.handlers.clear()
         
-        # Handler customizado para GUI
         self.log_handler = LogHandler()
         self.log_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
         
-        # Handler para arquivo com rotação (máx 5 MB, mantém 3 backups)
         file_handler = RotatingFileHandler(
             self.log_file, maxBytes=5 * 1024 * 1024, backupCount=3, encoding='utf-8'
         )
         file_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
         
-        # Handler para console (só quando existe console; no EXE sem console
-        # sys.stdout é None e os emojis estouram o encoding do cp1252)
         console_handler = None
         if sys.stdout is not None:
             try:
@@ -403,17 +392,14 @@ class OrganizadorCapturas:
             console_handler = logging.StreamHandler(sys.stdout)
             console_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
         
-        # Adiciona todos os handlers
         self.logger.addHandler(file_handler)
         if console_handler:
             self.logger.addHandler(console_handler)
         self.logger.addHandler(self.log_handler)
         
-        # Evita propagação para o logger raiz
         self.logger.propagate = False
         
     def extrair_data_do_nome(self, nome_arquivo):
-        """Extrai a data do nome do arquivo"""
         padrao = r'(\d{4})-(\d{2})-(\d{2})'
         match = re.search(padrao, nome_arquivo)
         if match:
@@ -421,21 +407,11 @@ class OrganizadorCapturas:
         return None, None, None
     
     def obter_data_modificacao(self, caminho_arquivo):
-        """Obtém a data de modificação do arquivo"""
         timestamp = os.path.getmtime(caminho_arquivo)
         data = datetime.fromtimestamp(timestamp)
         return str(data.year), f"{data.month:02d}", f"{data.day:02d}"
     
     def gerar_hash(self, caminho):
-        """
-        Gera hash MD5 do arquivo para detectar duplicatas.
-        
-        Args:
-            caminho: Caminho do arquivo
-            
-        Returns:
-            String com hash MD5 ou None se erro
-        """
         try:
             hash_md5 = hashlib.md5()
             with open(caminho, "rb") as f:
@@ -446,11 +422,10 @@ class OrganizadorCapturas:
             try:
                 self.logger.error(f"ERRO ao gerar hash de '{caminho}': {e}")
             except AttributeError:
-                print(f"ERRO ao gerar hash de '{caminho}': {e}")
+                pass
             return None
     
     def _carregar_cache_hashes(self):
-        """Carrega o cache de hashes do disco (arquivo JSON) para evitar releitura."""
         if self._cache_carregado:
             return
         cache_file = self.dados_dir / 'hash_cache.json'
@@ -467,7 +442,6 @@ class OrganizadorCapturas:
         self._cache_carregado = True
     
     def _salvar_cache_hashes(self):
-        """Salva o cache de hashes no disco."""
         cache_file = self.dados_dir / 'hash_cache.json'
         try:
             with open(cache_file, 'w', encoding='utf-8') as f:
@@ -476,54 +450,30 @@ class OrganizadorCapturas:
             self.logger.warning(f"⚠️  Erro ao salvar cache de hashes: {e}")
     
     def _atualizar_cache_hash(self, caminho_arquivo, hash_valor):
-        """Adiciona/atualiza uma entrada no cache de hashes."""
         self._hash_cache[hash_valor] = str(caminho_arquivo)
     
     def arquivo_duplicado_existe(self, hash_arquivo):
-        """
-        Verifica se já existe arquivo com mesmo hash usando o cache.
-        
-        Args:
-            hash_arquivo: Hash MD5 do arquivo
-            
-        Returns:
-            Path do arquivo duplicado ou None
-        """
         self._carregar_cache_hashes()
         caminho_cache = self._hash_cache.get(hash_arquivo)
         if caminho_cache:
             caminho = Path(caminho_cache)
             if caminho.exists():
                 return caminho
-            # Entrada obsoleta, remove do cache
             del self._hash_cache[hash_arquivo]
         return None
     
     def esperar_arquivo_estavel(self, caminho, timeout=10):
-        """
-        Espera até que o arquivo esteja completamente escrito.
-        Verifica se o tamanho do arquivo se estabilizou.
-        
-        Args:
-            caminho: Caminho do arquivo
-            timeout: Tempo máximo de espera em segundos
-            
-        Returns:
-            True se arquivo está estável, False se timeout
-        """
         tamanho_anterior = -1
         inicio = time.time()
         
         while time.time() - inicio < timeout:
             try:
-                # Verifica se arquivo ainda existe
                 if not os.path.exists(caminho):
                     self.logger.warning(f"⚠️  Arquivo desapareceu: {caminho}")
                     return False
                 
                 tamanho_atual = os.path.getsize(caminho)
                 
-                # Se tamanho não mudou, arquivo está pronto
                 if tamanho_atual == tamanho_anterior and tamanho_atual > 0:
                     return True
                 
@@ -534,36 +484,19 @@ class OrganizadorCapturas:
                 self.logger.warning(f"⚠️  Erro ao verificar arquivo: {e}")
                 return False
         
-        # Timeout - mas arquivo pode estar OK se for muito grande
         self.logger.warning(f"⚠️  Timeout ao aguardar estabilização de {caminho}")
-        return True  # Tenta processar mesmo assim
+        return True
     
     def organizar_arquivo(self, caminho_arquivo, verificar_estabilidade=True):
-        """
-        Organiza um arquivo específico.
-
-        Args:
-            caminho_arquivo: caminho do arquivo a organizar
-            verificar_estabilidade: espera o arquivo parar de crescer antes de
-                mover. O backfill desliga isso (arquivos antigos já estão
-                prontos), o que deixa a varredura inicial muito mais rápida.
-        """
         if self.pausado:
             return
         
         arquivo = Path(caminho_arquivo)
-        
-        # Extensões de imagem suportadas
         extensoes_imagem = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
         
         if arquivo.suffix.lower() not in extensoes_imagem:
             return
         
-        # Evita reprocessar arquivo que já está no destino correto.
-        # O watcher é recursivo e dispara evento quando o PRÓPRIO app move o
-        # arquivo — sem esta checagem ele se reprocessa e se apaga como
-        # "duplicata de si mesmo".
-        # Estrutura final: Ano/Mês-Dia/Dia/arquivo.png  -> 4 partes
         try:
             rel = arquivo.relative_to(self.pasta_monitorada)
             partes = rel.parts
@@ -576,22 +509,17 @@ class OrganizadorCapturas:
         except (ValueError, OSError):
             pass
         
-        # Tenta extrair data do nome
         ano, mes, dia = self.extrair_data_do_nome(arquivo.name)
         
-        # Se não conseguir, usa data de modificação
         if not ano:
             ano, mes, dia = self.obter_data_modificacao(arquivo)
         
-        # Cria estrutura de pastas
         mes_nome = MESES.get(mes, mes)
         pasta_destino = self.pasta_monitorada / ano / f"{mes}-{mes_nome}" / dia
         pasta_destino.mkdir(parents=True, exist_ok=True)
         
-        # Move o arquivo
         destino = pasta_destino / arquivo.name
         
-        # Evita sobrescrever
         contador = 1
         while destino.exists():
             nome_base = arquivo.stem
@@ -600,21 +528,17 @@ class OrganizadorCapturas:
             contador += 1
         
         try:
-            # Verifica se arquivo está completamente escrito (robusto para arquivos grandes)
             if verificar_estabilidade and not self.esperar_arquivo_estavel(str(arquivo)):
                 self.logger.warning(f"⚠️  Arquivo ainda está sendo escrito, pulando: {arquivo.name}")
                 return
             
-            # Verifica se arquivo ainda existe (pode ter sido movido/deletado)
             if not arquivo.exists():
                 self.logger.warning(f"⚠️  Arquivo não existe mais: {arquivo.name}")
                 return
             
-            # ANTI-DUPLICADO: Verifica se já existe arquivo idêntico (usa cache de hashes)
             hash_arquivo = self.gerar_hash(str(arquivo))
             if hash_arquivo:
                 arquivo_duplicado = self.arquivo_duplicado_existe(hash_arquivo)
-                # Nunca tratar o próprio arquivo como duplicata dele mesmo
                 if arquivo_duplicado and Path(arquivo_duplicado) == arquivo:
                     arquivo_duplicado = None
                 if arquivo_duplicado:
@@ -629,7 +553,6 @@ class OrganizadorCapturas:
                         except Exception as e:
                             self.logger.error(f"❌ Erro ao remover duplicata '{arquivo.name}': {e}")
                     else:
-                        # Move duplicata para pasta separada em vez de deletar
                         dup_pasta = Path(self.pasta_duplicatas) if self.pasta_duplicatas else self.pasta_monitorada / '00-Duplicatas'
                         dup_pasta.mkdir(parents=True, exist_ok=True)
                         dup_destino = dup_pasta / arquivo.name
@@ -648,10 +571,8 @@ class OrganizadorCapturas:
                         except Exception as e:
                             self.logger.error(f"❌ Erro ao mover duplicata '{arquivo.name}': {e}")
             
-            # Move o arquivo
             shutil.move(str(arquivo), str(destino))
             self.total_organizados += 1
-            # Atualiza cache de hash com o novo local
             if hash_arquivo:
                 self._atualizar_cache_hash(destino, hash_arquivo)
                 self._salvar_cache_hashes()
@@ -665,10 +586,6 @@ class OrganizadorCapturas:
             self.logger.error(f"❌ Erro ao organizar '{arquivo.name}': {e}")
     
     def organizar_existentes(self):
-        """
-        Varre a pasta monitorada e organiza arquivos que já estão lá (backfill).
-        Útil na primeira execução ou após mudar a pasta monitorada.
-        """
         if not self.pasta_monitorada.exists():
             self.logger.warning(f"⚠️  Pasta monitorada não existe: {self.pasta_monitorada}")
             return 0
@@ -677,7 +594,6 @@ class OrganizadorCapturas:
         contador = 0
         extensoes_imagem = {'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'}
         
-        # Varre a pasta monitorada (incluindo subpastas) para backfill
         arquivos_encontrados = [
             f for f in self.pasta_monitorada.rglob('*')
             if f.is_file() and f.suffix.lower() in extensoes_imagem
@@ -689,8 +605,6 @@ class OrganizadorCapturas:
             if self.pausado:
                 break
             try:
-                # Arquivos já existentes estão prontos: não precisa esperar
-                # estabilização (economiza ~0.6s por arquivo na 1ª varredura)
                 self.organizar_arquivo(str(arquivo), verificar_estabilidade=False)
                 contador += 1
             except Exception as e:
@@ -700,17 +614,14 @@ class OrganizadorCapturas:
         return contador
     
     def pausar(self):
-        """Pausa o monitoramento (o observer continua vivo, só ignora arquivos)"""
         self.pausado = True
         self.logger.info("⏸️  Monitoramento pausado")
     
     def retomar(self):
-        """Retoma o monitoramento"""
         self.pausado = False
         self.logger.info("▶️  Monitoramento retomado")
     
     def parar(self):
-        """Para o monitoramento"""
         self.ativo = False
         if self.observer:
             self.observer.stop()
@@ -719,20 +630,12 @@ class OrganizadorCapturas:
         self.logger.info(f"🛑 Monitoramento encerrado. Total organizado: {self.total_organizados}")
     
     def reiniciar_monitoramento(self, nova_pasta=None):
-        """
-        Reinicia o observador de arquivos, opcionalmente com uma nova pasta.
-        Usado quando o usuário muda a pasta monitorada via GUI.
-
-        Atenção: parar() desliga self.ativo (é o desligamento definitivo do app),
-        então religamos aqui — sem isso o monitoramento nunca voltava ao trocar
-        de pasta, e o log mostrava só "🛑 Monitoramento encerrado".
-        """
         self.parar()
         self.ativo = True
         self.pausado = False
         if nova_pasta:
             self.pasta_monitorada = Path(nova_pasta)
-            self._cache_carregado = False  # Força recarregamento do cache
+            self._cache_carregado = False
             self._hash_cache = {}
         if self.pasta_monitorada.exists():
             event_handler = ManipuladorArquivos(self)
@@ -744,7 +647,6 @@ class OrganizadorCapturas:
             )
             self.observer.start()
             self.logger.info(f"👁️  Monitoramento reiniciado: {self.pasta_monitorada}")
-            # Organiza o que já existe na pasta nova, sem travar a interface
             if nova_pasta:
                 threading.Thread(target=self.organizar_existentes, daemon=True).start()
         else:
@@ -752,21 +654,17 @@ class OrganizadorCapturas:
 
 
 class ManipuladorArquivos(FileSystemEventHandler):
-    """Manipulador de eventos do watchdog"""
     
     def __init__(self, organizador):
         self.organizador = organizador
     
     def on_created(self, event):
-        """Chamado quando um arquivo é criado"""
         if not event.is_directory:
             self.organizador.logger.info(f"🆕 Novo arquivo detectado: {event.src_path}")
             self.organizador.organizar_arquivo(event.src_path)
     
     def on_moved(self, event):
-        """Chamado quando um arquivo é movido"""
         if not event.is_directory:
-            # Verifica se o arquivo foi movido PARA a pasta monitorada
             dest_path = Path(event.dest_path)
             if dest_path.parent == self.organizador.pasta_monitorada:
                 self.organizador.logger.info(f"📁 Arquivo movido para pasta: {event.dest_path}")
@@ -774,20 +672,11 @@ class ManipuladorArquivos(FileSystemEventHandler):
 
 
 def desenhar_icone(tamanho=64, cor="green"):
-    """
-    Desenha o ícone do app: uma pasta com uma foto dentro.
-    Representa o propósito — capturas de tela organizadas em pastas.
-
-    A arte é sempre desenhada em 256x256 e reduzida com LANCZOS para o
-    tamanho pedido, então as bordas ficam suaves em qualquer DPI.
-    Usado tanto na bandeja (64) quanto na geração do app.ico (16..256).
-    """
     escala = 4
     lado = 64 * escala
     img = Image.new('RGBA', (lado, lado), (255, 255, 255, 0))
     draw = ImageDraw.Draw(img)
 
-    # Cor por estado: verde = ativo, amarelo = pausado, vermelho = parado
     paletas = {
         "green": ("#43A047", "#14401A"),
         "yellow": ("#F9A825", "#4A2C00"),
@@ -796,12 +685,10 @@ def desenhar_icone(tamanho=64, cor="green"):
     cor_pasta, cor_borda = paletas.get(cor, paletas["green"])
 
     def px(*valores):
-        """Converte coordenadas do desenho (base 64) para a escala interna."""
         return [v * escala for v in valores]
 
-    borda = escala  # equivale a ~1px no tamanho final
+    borda = escala
 
-    # Aba da pasta
     draw.rounded_rectangle(
         px(12, 9, 34, 23),
         radius=4 * escala,
@@ -810,7 +697,6 @@ def desenhar_icone(tamanho=64, cor="green"):
         width=borda
     )
 
-    # Corpo da pasta
     draw.rounded_rectangle(
         px(6, 16, 58, 56),
         radius=6 * escala,
@@ -819,23 +705,19 @@ def desenhar_icone(tamanho=64, cor="green"):
         width=borda
     )
 
-    # Foto (a captura) dentro da pasta
     draw.rounded_rectangle(
         px(14, 24, 50, 48),
         radius=3 * escala,
         fill=(255, 255, 255, 255)
     )
 
-    # Sol (âmbar contrasta com a montanha e sobrevive à redução p/ 16px)
     draw.ellipse(px(37, 26, 45, 34), fill="#FFB300")
 
-    # Montanha (elemento clássico de ícone de imagem)
     draw.polygon(
         [tuple(px(15, 44)), tuple(px(27, 32)), tuple(px(39, 44))],
         fill=cor_borda
     )
 
-    # Morro em primeiro plano, dá profundidade
     draw.polygon(
         [tuple(px(30, 44)), tuple(px(38, 37)), tuple(px(46, 44))],
         fill=cor_pasta
@@ -845,7 +727,6 @@ def desenhar_icone(tamanho=64, cor="green"):
 
 
 class AplicativoTray:
-    """Aplicativo com ícone na bandeja do sistema"""
     
     def __init__(self, pasta_monitorada, script_dir, config=None):
         self.script_dir = script_dir
@@ -855,11 +736,9 @@ class AplicativoTray:
         self.log_window = LogWindow(self.organizador)
         
     def criar_icone(self, cor="green"):
-        """Cria o ícone 64x64 da bandeja (delegado a desenhar_icone)."""
         return desenhar_icone(64, cor)
     
     def iniciar_monitoramento(self):
-        """Inicia o monitoramento em thread separada"""
         event_handler = ManipuladorArquivos(self.organizador)
         self.organizador.observer = Observer()
         self.organizador.observer.schedule(
@@ -871,23 +750,18 @@ class AplicativoTray:
         self.organizador.logger.info(f"👁️  Monitorando: {self.organizador.pasta_monitorada}")
     
     def pausar_monitoramento(self, icon, item):
-        """Pausa o monitoramento"""
         self.organizador.pausar()
         self.atualizar_icone("yellow")
     
     def retomar_monitoramento(self, icon, item):
-        """Retoma o monitoramento"""
         self.organizador.retomar()
         self.atualizar_icone("green")
     
     def mostrar_status(self, icon, item):
-        """Abre janela de logs e status"""
-        # Cria thread para GUI (para não bloquear o ícone)
         thread = threading.Thread(target=self.log_window.create_window, daemon=True)
         thread.start()
     
     def configurar_pasta(self, icon, item):
-        """Permite reconfigurar a pasta monitorada e reinicia o monitoramento"""
         root = tk.Tk()
         root.withdraw()
         
@@ -897,15 +771,12 @@ class AplicativoTray:
         )
         
         if nova_pasta:
-            # Salva nova configuração
             config_manager = ConfigManager()
             config_manager.set_pasta_monitorada(nova_pasta)
             
-            # Atualiza config em memória e reinicia o observador
             self.config['pasta_monitorada'] = nova_pasta
             self.organizador.reiniciar_monitoramento(nova_pasta=nova_pasta)
             
-            # Atualiza o checkbox de auto-start no menu (recria o ícone)
             if self.icon:
                 self.icon.menu = pystray.Menu(
                     pystray.MenuItem(
@@ -952,7 +823,6 @@ class AplicativoTray:
         root.destroy()
     
     def toggle_autostart(self, icon, item):
-        """Habilita/desabilita auto-start no Windows"""
         if sys.platform != 'win32':
             messagebox.showerror(
                 "Não Disponível",
@@ -963,7 +833,6 @@ class AplicativoTray:
         script_path = Path(__file__).resolve()
         
         if WindowsAutoStart.esta_habilitado():
-            # Desabilitar
             sucesso, mensagem = WindowsAutoStart.desabilitar()
             if sucesso:
                 self.organizador.logger.info(f"⚙️  Auto-start desabilitado")
@@ -971,7 +840,6 @@ class AplicativoTray:
             else:
                 messagebox.showerror("Erro", mensagem)
         else:
-            # Habilitar
             sucesso, mensagem = WindowsAutoStart.habilitar(str(script_path))
             if sucesso:
                 self.organizador.logger.info(f"⚙️  Auto-start habilitado")
@@ -980,7 +848,6 @@ class AplicativoTray:
                     f"{mensagem}\n\nO organizador iniciará automaticamente quando você ligar o computador!"
                 )
             else:
-                # Se falhar (acesso negado), oferecer método alternativo
                 if "Acesso negado" in mensagem or "WinError 5" in mensagem:
                     resposta = messagebox.askyesno(
                         "Permissão Necessária",
@@ -997,7 +864,6 @@ class AplicativoTray:
                     )
                     
                     if resposta:
-                        # Método alternativo: criar atalho na pasta Startup
                         sucesso_alt = self.criar_atalho_startup(script_path)
                         if sucesso_alt:
                             messagebox.showinfo(
@@ -1017,20 +883,17 @@ class AplicativoTray:
                     messagebox.showerror("Erro", mensagem)
     
     def criar_atalho_startup(self, script_path):
-        """Cria atalho na pasta Startup do Windows (método alternativo)"""
         try:
             import win32com.client
             
-            # Obtém pasta Startup
             startup_folder = Path(os.environ['APPDATA']) / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs' / 'Startup'
             shortcut_path = startup_folder / 'OrganizadorCapturas.lnk'
             
-            # Cria o atalho
             shell = win32com.client.Dispatch("WScript.Shell")
             shortcut = shell.CreateShortCut(str(shortcut_path))
             shortcut.Targetpath = str(script_path)
             shortcut.WorkingDirectory = str(script_path.parent)
-            shortcut.WindowStyle = 7  # Minimizado
+            shortcut.WindowStyle = 7
             shortcut.Description = "Organizador Automático de Capturas de Tela"
             shortcut.save()
             
@@ -1038,12 +901,10 @@ class AplicativoTray:
         except Exception as e:
             self.organizador.logger.error(f"Erro ao criar atalho: {e}")
             
-            # Se win32com não estiver disponível, tenta método simples
             try:
                 startup_folder = Path(os.environ['APPDATA']) / 'Microsoft' / 'Windows' / 'Start Menu' / 'Programs' / 'Startup'
                 shortcut_path = startup_folder / 'OrganizadorCapturas.lnk'
                 
-                # Usa comando PowerShell como fallback
                 import subprocess
                 ps_command = f'''
                 $WshShell = New-Object -ComObject WScript.Shell
@@ -1060,25 +921,16 @@ class AplicativoTray:
                 return False
     
     def sair(self, icon, item):
-        """Encerra o aplicativo"""
         self.organizador.logger.info("👋 Encerrando aplicativo...")
         self.organizador.parar()
         icon.stop()
     
     def atualizar_icone(self, cor):
-        """Atualiza a cor do ícone"""
         if self.icon:
             self.icon.icon = self.criar_icone(cor)
     
     def _backfill_inicial(self):
-        """
-        Organiza as capturas que já estavam na pasta, em segundo plano.
-
-        Roda numa thread separada para o ícone da bandeja aparecer na hora:
-        com centenas de arquivos, o backfill pode levar minutos.
-        """
         try:
-            # Avisa que o app subiu (o Windows às vezes esconde o ícone novo)
             try:
                 self.icon.notify(
                     'Organizador ativo. As capturas que já estavam na pasta '
@@ -1092,11 +944,8 @@ class AplicativoTray:
             self.organizador.logger.error(f"❌ Erro no backfill inicial: {e}")
 
     def executar(self):
-        """Executa o aplicativo"""
-        # Inicia o monitoramento
         self.iniciar_monitoramento()
         
-        # Cria o menu (com checkbox dinâmico para auto-start)
         menu = pystray.Menu(
             pystray.MenuItem(
                 "Organizador de Capturas",
@@ -1133,7 +982,6 @@ class AplicativoTray:
             )
         )
         
-        # Cria o ícone na bandeja
         self.icon = pystray.Icon(
             "organizador_capturas",
             self.criar_icone("green"),
@@ -1150,15 +998,12 @@ class AplicativoTray:
         self.organizador.logger.info("💡 Clique com botão direito no ícone para ver opções")
         self.organizador.logger.info("="*60)
         
-        # Backfill em segundo plano (não bloqueia a criação do ícone)
         threading.Thread(target=self._backfill_inicial, daemon=True).start()
         
-        # Roda o aplicativo
         self.icon.run()
 
 
 def selecionar_pasta_inicial():
-    """Interface para selecionar pasta na primeira execução"""
     root = tk.Tk()
     root.withdraw()
     
@@ -1179,7 +1024,6 @@ def selecionar_pasta_inicial():
 
 
 if __name__ == "__main__":
-    # Instância única: sem isso, duas cópias brigam pelos mesmos arquivos
     if ja_existe_outra_instancia():
         try:
             raiz_aviso = tk.Tk()
@@ -1195,15 +1039,12 @@ if __name__ == "__main__":
             pass
         sys.exit(0)
 
-    # Diretório do script
     script_dir = Path(__file__).parent
     
-    # Gerenciador de configuração
     config_manager = ConfigManager()
-    config = dict(config_manager.config)  # Carrega config completo (inclui deletar_duplicatas, etc.)
+    config = dict(config_manager.config)
     pasta_monitorada = config.get('pasta_monitorada')
     
-    # Se não tiver pasta configurada, pede ao usuário
     if not pasta_monitorada:
         pasta_monitorada = selecionar_pasta_inicial()
         
@@ -1216,7 +1057,6 @@ if __name__ == "__main__":
         config_manager.save_config()
         print(f"✅ Pasta configurada: {pasta_monitorada}")
     
-    # Verifica se a pasta existe
     if not Path(pasta_monitorada).exists():
         print(f"⚠️  Pasta configurada não existe: {pasta_monitorada}")
         print("Por favor, reconfigure...")
@@ -1229,7 +1069,6 @@ if __name__ == "__main__":
         config_manager.config = config
         config_manager.save_config()
     
-    # Verifica se há suporte gráfico
     try:
         app = AplicativoTray(pasta_monitorada, script_dir, config=config)
         app.executar()
