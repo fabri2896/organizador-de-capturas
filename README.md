@@ -123,7 +123,7 @@ pip install watchdog pystray pillow
 
 1. **Baixe o instalador mais recente:**
    - Acesse: [Releases](https://github.com/fabri2896/organizador-de-capturas/releases/latest)
-   - Baixe: `OrganizadorCapturas-2.0.1-Setup.exe`
+   - Baixe: `OrganizadorCapturas.exe`
 
 2. **Execute e siga o assistente:**
    - Escolha **"Instalar para todos os usuários"** (pede admin) ou **"Apenas para mim"** (sem admin)
