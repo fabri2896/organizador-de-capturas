@@ -429,8 +429,8 @@ Contribuições são muito bem-vindas! 🎉
 ### Ideias de melhorias:
 
 - [ ] Suporte para mais formatos de arquivo (vídeos, documentos)
+- [ ] Monitoramento de multiplas pastas
 - [ ] Interface web para visualizar capturas organizadas
-- [ ] Busca por texto em capturas (OCR)
 - [ ] Compressão automática de imagens antigas
 - [ ] Integração com serviços de nuvem (Google Drive, Dropbox)
 - [ ] Modo "galeria" para visualização rápida
@@ -466,7 +466,7 @@ documentação foram feitos nessa parceria. O histórico completo fica nos commi
 ✅ Sim! Funciona com qualquer ferramenta de captura. Configure para salvar na pasta monitorada.
 
 ### Posso monitorar várias pastas?
-⚠️ Atualmente apenas uma pasta. Mas você pode executar múltiplas instâncias do script.
+⚠️ Atualmente apenas uma pasta. E na att 2.0.4 impede multipla instacias .
 
 ### O que acontece se eu desligar o computador?
 ✅ Se configurou auto-start, o organizador inicia automaticamente na próxima vez.
